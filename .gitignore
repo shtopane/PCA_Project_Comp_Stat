@@ -1,4 +1,6 @@
 packrat/lib*/
 packrat/src*/
 data/gss/*
+project/_cache
 data/Replication.txt
+.Rproj.user
