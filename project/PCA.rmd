@@ -2,9 +2,6 @@
 title: "Factor models with Principal Component methods: Strengths and weaknesses"
 subtitle: "Project for the course Computational Statistics, University of Bonn 2022"
 author: "Krasimira Kirilova"
-abstract: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed molestie ante risus, in scelerisque arcu iaculis at. Ut nec felis enim. Cras et risus a tellus semper condimentum blandit at tortor. Proin sodales metus ac imperdiet vulputate. Donec non volutpat felis, eu consequat est. Nulla mi tortor, consequat nec pulvinar et, mattis et nisi. Nunc mollis fermentum erat, id volutpat nisi euismod quis.
-
-Duis varius velit eget mattis ullamcorper. Morbi blandit metus ex, quis maximus ipsum elementum non. Mauris pharetra arcu vel pellentesque pulvinar. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Mauris laoreet auctor arcu et faucibus. In lacinia maximus enim, in iaculis eros euismod id. Ut ac auctor augue. In hac habitasse platea dictumst. Praesent et nisi nulla. Aliquam ultrices interdum molestie. Nam viverra nisi quis aliquam fringilla. Fusce tincidunt eros quis elementum tristique."
 date: "August 23, 2022"
 output: 
   pdf_document:
@@ -23,6 +20,8 @@ library("readxl") # read Excel files
 library("MASS")
 library("esquisse") # addin for data visualization
 library("xts") #time series conversion
+library("zoo") # time series
+library("hornpa") # test how many PCA factors to use in analysis
 ```
 # Simulation
 ```{r, results='hide', echo=TRUE, message=FALSE}
@@ -31,7 +30,6 @@ source("./functions/data_utils.R")
 load(file = "../data/data/WORKING_DATA.rda")
 
 # CONSTANTS ----
-data_row_len <- nrow(hendry_data_raw)
 
 # Variables to forecast:
 # CPI inflation
@@ -41,15 +39,40 @@ data_row_len <- nrow(hendry_data_raw)
 predictor_variables <- c("CPIAUCSL", "IPS10", "LHUR", "FYFF")
 
 # END CONSTANTS ----
-# I need to import this data!
-train <- getmacrodata(WORKING_DATA, enddate = as.Date("2006/12/01"))
 
-# Try do to PCA on the whole dataset
+# Get data set end date(Note: this could be a constant, but again if you change the file now including later years this code will work automatically)
+data_end_date <- tail(zoo::as.Date(WORKING_DATA$rawdata), n = 1)
+transformed_ts <- get_transformed_time_series(WORKING_DATA, enddate = data_end_date)
+
+ts_cor <- cor(WORKING_DATA$rawdata)
+# Try do to PCA on the whole dataset, all components
 set.seed(2)
-prediction_var <- train[, predictor_variables]
-train <- remove_columns(train, predictor_variables)
-result <- pcr(prediction_var ~ ., data = train, scale = TRUE, validaiton = CV)
-summary(result)
-validationplot(result, val.type = "MSEP")
+# prediction_var <- transformed_ts[, predictor_variables]
+# transformed_ts <- remove_columns(transformed_ts, predictor_variables)
+# result <- pcr(prediction_var ~ ., data = transformed_ts, scale = TRUE, validaiton = CV)
+# summary(result)
+# validationplot(result, val.type = "MSEP")
+
+IPS10_pca <- pcr(IPS10 ~ ., data = transformed_ts, scale = TRUE, validation = "CV", ncomp = 5)
+
+summary(IPS10_pca)
+plot(
+  IPS10_pca$scores[, 4], 
+  transformed_ts[, "IPS10"][1:190],
+  xlab = "PC comp 4 scores",
+  ylab = "IPS10")
+plot(
+  IPS10_pca$scores[, 2], 
+  transformed_ts[, "IPS10"][1:190],
+  xlab = "PC comp 2 scores",
+  ylab = "IPS10")
+biplot(IPS10_pca, which = "loadings")
+# Shows cross-validated error
+plot(RMSEP(IPS10_pca), legendpos = "topright")
+# Shows cross-validated predictions vs measured
+plot(IPS10_pca, ncomp = 2, asp = 1, line = TRUE)
+
+plot(IPS10_pca, "loadings", comps = 1:3, legendpos = "topleft", xlab = "nm")
+abline(h = 0)
 
 ```
