@@ -1,161 +1,228 @@
-test_env <- new.env()
-library("MASS")
-
-set.seed(199)
-
-test_env$N <- 192
-# Number of Variables
-test_env$p <- 108
-
-# Make covariance matrix
-# 0.189 0.181 0.
-test_env$sigma <- rbind(
-  c(0.189, 0.181, 0.173, 0.153, 0.122),
-  c(0.181, 0.166, 0.151, 0.111, 0.090),
-  c(0.207, 0.151, 0.155, 0.104, 0.060),
-  c(0.153, 0.111, 0.104, 0.094, 0.040),
-  c(0.122, 0.090, 0.060, 0.040, 0.176)
-)
-#test_env$sigma <- matrix(test_env$cc, nrow = test_env$p, ncol = test_env$p)
-
-test_env$cov_matrix <- rbind(
-  c(0.189, 0.181, 0.173, 0.153, 0.122),
-  c(0.181, 0.166, 0.151, 0.111, 0.090),
-  c(0.207, 0.151, 0.155, 0.104, 0.060),
-  c(0.153, 0.111, 0.104, 0.094, 0.040),
-  c(0.122, 0.090, 0.060, 0.040, 0.176)
-)
-test_env$sigma <- t(test_env$cov_matrix) %*% test_env$cov_matrix
-test_env$sd <- runif(test_env$p, min = -0.99, max = 1)
-test_env$X <- mvrnorm(test_env$N, mu = test_env$mu, Sigma = Sigma)
-# Error
-test_env$eps <- rnorm(test_env$N)
-test_env$eps <- sqrt(4 * test_env$N) * test_env$eps
-# BETAS
-# With this coefficients it seems that all components are important
-# -3.6, 5.1, 3.2, -0.9, 0.04
-test_env$betas <- c(0.001, 15.1, -0.0002, 15.3, 0.04)
-test_env$y <- test_env$X %*% test_env$betas + test_env$eps
-test_env$data <- data.frame("Y" = test_env$y,
-                            "X" = test_env$X)
-
-# Plot data
-# First two variables are highly correlated with Y, and the other 3 seem more like noise, but again there is some correlation
-plot(test_env$X[, 4], test_env$y, col = c("red", "blue"))
-cor(x = test_env$X[, 5], y = test_env$y)
 
 
+
+
+
+
+
+# test_env$cov_matrix <- rbind(
+#   c(0.189, 0.181, 0.173, 0.153, 0.122),
+#   c(0.181, 0.166, 0.151, 0.111, 0.090),
+#   c(0.207, 0.151, 0.155, 0.104, 0.060),
+#   c(0.153, 0.111, 0.104, 0.094, 0.040),
+#   c(0.122, 0.090, 0.060, 0.040, 0.176)
+# )
+#
+# test_env$sigma <- t(test_env$cov_matrix) %*% test_env$cov_matrix
+# test_env$sd <- runif(test_env$p, min = -0.99, max = 1)
+# test_env$X <- mvrnorm(test_env$N, mu = test_env$mu, Sigma = Sigma)
+# # Error
+# test_env$eps <- rnorm(test_env$N)
+# test_env$eps <- sqrt(4 * test_env$N) * test_env$eps
+#
+# # BETAS
+# # With this coefficients it seems that all components are important
+# # -3.6, 5.1, 3.2, -0.9, 0.04
+# test_env$betas <- c(0.001, 15.1, -0.0002, 15.3, 0.04)
+# test_env$y <- test_env$X %*% test_env$betas + test_env$eps
+# test_env$data <- data.frame("Y" = test_env$y,
+#                             "X" = test_env$X)
+#
+# # Plot data
+# # First two variables are highly correlated with Y, and the other 3 seem more like noise, but again there is some correlation
+# plot(test_env$X[, 4], test_env$y, col = c("red", "blue"))
+# cor(x = test_env$X[, 5], y = test_env$y)
 
 
 # TEST: Create big covariance matrix
 library("propagate") # lib for creating big correlation or covariance matrices
+library("MASS")
+library("corrplot") # display correlations
+source("project/functions/helpers.R")
+source("project/functions/generate_data.R")
 
-# Generates data
-# N: number of observations
-# variable_count: number of regressors to have
-# error_term_constant: A constant used to transform the randomly generated error term by the formula:
-#   sqrt(c * N) * epsilon
-#   default is 4
-dgp <- function(N,
-                variable_count,
-                mu,
-                error_term_constant = 4,
-                INCREASE_FACTOR = 1,
-                BETAS_INFLUENCE_PROPORTION = 0.03,
-                BETAS_INCREASE_FACTOR = 9,
-                X_COVARIANCE_CLUSTER_PROPORTION = 0.20) {
-  # CONSTANTS ----
-  X_COVARIANCE_CLUSTER_PROPORTION <-
-    X_COVARIANCE_CLUSTER_PROPORTION#0.20
-  INCREASE_FACTOR <- INCREASE_FACTOR#1
-  BETAS_INFLUENCE_PROPORTION <- BETAS_INFLUENCE_PROPORTION#0.03
-  BETAS_INCREASE_FACTOR <- BETAS_INCREASE_FACTOR#9
-  # END CONSTANTS ----
-  
-  # Mu is random by design(?)
-  if(is.null(mu)){
-    mu <- rnorm(test_env)  
-  }
-  
-  # Error term
-  eps <- rnorm(N)
-  eps <- sqrt(error_term_constant * N) * eps
-  
-  # X's
-  X_covariance_raw <- rnorm(variable_count * N)
-  
-  X_cluster_index <-
-    round(length(X_covariance_raw) * X_COVARIANCE_CLUSTER_PROPORTION)
-  X_covariance_raw_transformed <- X_covariance_raw
-  
-  X_covariance_raw_transformed[1:X_cluster_index] <-
-    seq(
-      from = max(X_covariance_raw) * INCREASE_FACTOR,
-      to = (max(X_covariance_raw) - sd(X_covariance_raw)),
-      len = X_cluster_index
-    )
-  
-  # Maybe just a random? PLAY WITH THIS
-  covariance_input_matrix <-
-    matrix(X_covariance_raw_transformed, ncol = variable_count)
-  # size = 2000: this is the fastest one according to the library author. (used to determine how many units per group to create when calculating covariance)
-  X_covariance <-
-    bigcor(covariance_input_matrix, size = 2000, fun = "cov")
-  
-  # Transform "ff" format to matrix [EXTRACT INTO FUNCTION]
-  X_covariance <-
-    X_covariance[1:nrow(X_covariance), 1:ncol(X_covariance)]
-  
-  X <-
-    mvrnorm(N,
-            mu = mu,
-            Sigma = X_covariance,
-            empirical = TRUE)
-  
-  # BETAS
-  betas <- rnorm(variable_count)
-  # Important factors
-  betas_cluster_index <-
-    round(variable_count * BETAS_INFLUENCE_PROPORTION)
-  betas_with_cluster <- betas
-  betas_max_value <- max(betas) * BETAS_INCREASE_FACTOR
-  
-  betas_with_cluster[1:betas_cluster_index] <-
-    seq((betas_max_value - sd(BETAS)), betas_max_value, len = betas_cluster_index)
-  
-  # Y & Data
-  Y <- X %*% betas_with_cluster + test_env$eps
-  data <- data.frame(Y, X)
-  
-  return(data)
-}
+test_env <- new.env()
 
-data_trial <- dgp(N = test_env$N, variable_count = test_env$p, mu = test_env$mu)
-  # CLUSTER_INDEX <- sample.int(test_env$N, round(test_env$N * 0.2))
-  # ts.plot(TEST_X)
-  
-  
-  
-  
-  PCR <-
+set.seed(199)
+
+# DEMO ----
+test_env$N <- 200 #192
+# Number of Variables
+test_env$p <- 15#108
+
+
+# Generate mean for variables
+test_env$mu <-
+  rnorm(test_env$p) #rep(1, test_env$p) # runif(test_env$p, min = -1, max = 2.5)
+
+test_env$correlated_variables_with_response <- c(
+  # strong factors are 1 variable
+  get_percentage_of_number(1, test_env$p),
+  # strong factors are 1/3 of dataset
+  get_percentage_of_number(round(test_env$p / 3), test_env$p),
+  # strong factors are all of the dataset
+  get_percentage_of_number(round(test_env$p / 1), test_env$p),
+  0
+)
+
+# NOTES:
+# BIG CORRELATION BETWEEN Y & first X's:
+# INCREASE_FACTOR = 6(PCR DOES WELL)
+# X_COVARIANCE_CLUSTER_PROPORTION = 0.04(one variable): DOES THE TRICK: PCR BREAKS!
+train <- sample(test_env$N, test_env$N / 2)
+test  <- -train
+
+test_env$data_trial <-
+  dgp(
+    N = test_env$N,
+    variable_count = test_env$p,
+    mu = test_env$mu,
+    INCREASE_FACTOR = 9,
+    X_COVARIANCE_CLUSTER_PROPORTION = test_env$correlated_variables_with_response[4],
+    BETAS_INFLUENCE_PROPORTION = test_env$correlated_variables_with_response[4]
+  )
+
+# SEPERATE X FROM Y
+test_env$x <-
+  model.matrix(Y ~ ., data = test_env$data_trial)[, -1] # throw out intercept
+test_env$y <- test_env$data_trial$Y
+
+test_env$data_corr <- cor(test_env$data_trial)
+corrplot(test_env$data_corr, method = "circle")
+
+PCR <-
   pcr(
-    TEST_Y ~ .,
-    data = DATA,
+    Y ~ .,
+    data = test_env$data_trial,
+    subset = train,
     scale = TRUE,
-    subset = TRAIN,
     validation = "CV"
   )
-# summary(PCR)
-# biplot(PCR, which = "loadings")
-# plot(RMSEP(PCR), legendpos = "topright")
-# cor(x = TEST_X[, 22], y = TEST_Y)
+
+#summary(PCR)
+plot(RMSEP(PCR), legendpos = "topright")
+
+test_env$PCR_MIN_RMSEP_COMP <- get_optimal_num_of_components(PCR)
+
+pcr.pred <-
+  predict(PCR, test_env$x[test, ], ncomp = test_env$PCR_MIN_RMSEP_COMP)
+get_MSE(pcr.pred, test_env$y[test])
+
 
 # TEST WITH PLSR
 PLSR <-
   plsr(
-    TEST_Y ~ .,
-    data = DATA,
-    subset = TRAIN,
+    Y ~ .,
+    data = test_env$data_trial,
+    subset = train,
     scale = TRUE,
     validation = "CV"
   )
+# biplot(PLSR, which = "loadings")
+plot(RMSEP(PLSR), legendpos = "topright")
+
+test_env$PLSR_MIN_RMSEP_COMP <- get_optimal_num_of_components(PLSR)
+plsr.pred <-
+  predict(PLSR, test_env$x[test, ], ncomp = test_env$PLSR_MIN_RMSEP_COMP)
+get_MSE(plsr.pred, test_env$y[test])
+# END DEMO ----
+
+simulation <- function(INCREASE_FACTOR = 9) {
+  set.seed(13456)
+  N <- 200
+  # Number of Variables
+  p <- 15
+  
+  # Split train and test sample
+  train <- sample(N, N / 2)
+  test  <- -train
+  
+  # Generate mean of variables
+  mu <- rnorm(p)
+  # Simulation runs
+  runs <- 10
+  
+  # Proportion of correlated variables with the response variable
+  # % of p is giving us 1 variable, 5 variables and so on
+  # 1%, 5%, 25%, 0%
+  correlated_variables_with_response <- c(
+    # strong factors are 1 variable
+    get_percentage_of_number(1, p),
+    # strong factors are 1/3 of dataset
+    get_percentage_of_number(round(p / 3), p),
+    # strong factors are all of the dataset
+    get_percentage_of_number(round(p / 1), p),
+    0
+  )
+  
+  correlated_variables_with_response_length <-
+    length(correlated_variables_with_response)
+  # Create MSE vectors
+  MSE_PCR <-
+    matrix(ncol = correlated_variables_with_response_length, nrow = runs)
+  MSE_PLSR <-
+    matrix(ncol = correlated_variables_with_response_length, nrow = runs)
+  
+  # Draw data
+  # Simulate runs times with the 4 correlated variables proportions
+  for (i in 1:runs) {
+    for (j in 1:correlated_variables_with_response_length) {
+      # Draw data ----
+      dgp_data <-
+        dgp(
+          N = N,
+          variable_count = p,
+          mu = mu,
+          INCREASE_FACTOR = INCREASE_FACTOR,
+          X_COVARIANCE_CLUSTER_PROPORTION = correlated_variables_with_response[j],
+          BETAS_INFLUENCE_PROPORTION = correlated_variables_with_response[j]
+        )
+      # ----
+      
+      # Seperate X's from Y's
+      x <-
+        model.matrix(Y ~ ., data = dgp_data)[, -1] # throw out intercept
+      y <- dgp_data$Y
+      
+      # Do PCR ----
+      PCR <-
+        pcr(
+          Y ~ .,
+          data = dgp_data,
+          subset = train,
+          scale = TRUE,
+          validation = "CV"
+        )
+      
+      PCR_ncomp <- get_optimal_num_of_components(PCR)
+      
+      PCR_predict <- predict(PCR, x[test, ], ncomp = PCR_ncomp)
+      MSE_PCR[i, j] <- get_MSE(PCR_predict, y[test])
+      # ----
+      
+      # Do PLSR
+      PLSR <-
+        plsr(
+          Y ~ .,
+          data = dgp_data,
+          subset = train,
+          scale = TRUE,
+          validation = "CV"
+        )
+      
+      PLSR_ncomp <- get_optimal_num_of_components(PLSR)
+      PLSR_predict <- predict(PLSR, x[test, ], ncomp = PLSR_ncomp)
+      MSE_PLSR[i, j] <- get_MSE(PLSR_predict, y[test])
+      # ----
+    }
+  }
+  
+  return(list("MSE_PCR" = MSE_PCR, "MSE_PLSR" = MSE_PLSR))
+  
+}
+
+test_env$MSE <- simulation()
+test_env$MSE_stats <- save_mean_mse_and_return_stats(test_env$MSE)
+
+
+plot_MSE_comparison_boxplot(test_env$MSE, test_env$MSE_stats)
