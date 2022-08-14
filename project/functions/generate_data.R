@@ -8,19 +8,9 @@ dgp <- function(N,
                 variable_count,
                 mu,
                 error_term_constant = 4,
-                INCREASE_FACTOR = 1,
-                BETAS_INFLUENCE_PROPORTION = 0.20,
-                #0.03,
                 BETAS_INCREASE_FACTOR = 9,
                 X_COVARIANCE_CLUSTER_PROPORTION = 0.20) {
-  # CONSTANTS ----
-  X_COVARIANCE_CLUSTER_PROPORTION <-
-    X_COVARIANCE_CLUSTER_PROPORTION#0.20
-  INCREASE_FACTOR <- INCREASE_FACTOR#1
-  BETAS_INFLUENCE_PROPORTION <- BETAS_INFLUENCE_PROPORTION#0.03
-  BETAS_INCREASE_FACTOR <- BETAS_INCREASE_FACTOR#9
-  # END CONSTANTS ----
-  
+
   # Mu is random by design(?)
   if (is.null(mu)) {
     mu <- rnorm(test_env)
@@ -66,7 +56,7 @@ dgp <- function(N,
   # Select betas which will be tightly coupled with the response. In this sense we create a strong or weak factor
   # structure
   betas_cluster_index <-
-    round(variable_count * BETAS_INFLUENCE_PROPORTION)
+    round(variable_count * X_COVARIANCE_CLUSTER_PROPORTION)
   betas_with_cluster <- betas
   
   

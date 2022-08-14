@@ -44,6 +44,19 @@ save_mean_mse_and_return_stats <- function(MSE_list) {
   
 }
 
+get_mean_number_of_components_by_method <- function(ncomp_list){
+  length <- ncol(ncomp_list$PCR_ncomp)
+  mean_ncomp_PCR <- rep(0, length)
+  mean_ncomp_PLSR <- rep(0, length)
+  
+  for(i in 1:length){
+    mean_ncomp_PCR <- round(mean(ncomp_list$PCR_ncomp[,i]))
+    mean_ncomp_PLSR <- round(mean(ncomp_list$PLSR_ncomp[,i]))
+  }
+  
+  return(list(mean_ncomp_PCR, mean_ncomp_PLSR))
+}
+
 plot_MSE_comparison_boxplot <- function(MSE_list, MSE_stats_list){
   length <- ncol(MSE_list$MSE_PCR)
   
