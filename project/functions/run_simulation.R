@@ -133,7 +133,10 @@ get_MSE(plsr.pred, test_env$y[test])
 simulation <-
   function(dgp_option_list = list(error_term_constant = 4,
                                   BETAS_INCREASE_FACTOR = 9),
-           simulation_option_list = list(N = 200, p = 15, runs = 100)) {
+           simulation_option_list = list(N = 200,
+                                         p = 15,
+                                         runs = 100,
+                                         ncomp = NULL)) {
     set.seed(13456)
     print(simulation_option_list$N)
     print(simulation_option_list$p)
@@ -207,12 +210,17 @@ simulation <-
             validation = "CV"
           )
         
+        # Use passed number of components or determine the optimal one
+        if (is.null(simulation_option_list$ncomp)) {
         PCR_ncomp <- get_optimal_num_of_components(PCR)
+        } else {
+          PCR_ncomp <- simulation_option_list$ncomp
+        }
         
         # TODO: Track ncomp
         PCR_ncomp_tracker[i, j] <- PCR_ncomp
         
-        PCR_predict <- predict(PCR, x[test, ], ncomp = PCR_ncomp)
+        PCR_predict <- predict(PCR, x[test,], ncomp = PCR_ncomp)
         # Save MSE
         MSE_PCR[i, j] <- get_MSE(PCR_predict, y[test])
         # ----
@@ -227,12 +235,17 @@ simulation <-
             validation = "CV"
           )
         
-        PLSR_ncomp <- get_optimal_num_of_components(PLSR)
+        # Use passed number of components or determine the optimal one
+        if (is.null(simulation_option_list$ncomp)) {
+          PLSR_ncomp <- get_optimal_num_of_components(PCR)
+        } else {
+          PLSR_ncomp <- simulation_option_list$ncomp
+        }
         
         # TODO: Track ncomp
         PLSR_ncomp_tracker[i, j] <- PLSR_ncomp
         
-        PLSR_predict <- predict(PLSR, x[test, ], ncomp = PLSR_ncomp)
+        PLSR_predict <- predict(PLSR, x[test,], ncomp = PLSR_ncomp)
         # Save MSE
         MSE_PLSR[i, j] <- get_MSE(PLSR_predict, y[test])
         # ----
