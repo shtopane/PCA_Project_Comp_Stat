@@ -1,4 +1,4 @@
-source("project/functions/constants.R")
+source("functions/constants.R")
 
 get_percentage_of_number <- function(percentage, number){
   return(round(percentage / number, digits = 2))
@@ -59,16 +59,17 @@ get_mean_number_of_components_by_method <- function(ncomp_list){
 
 plot_MSE_comparison_boxplot <- function(MSE_list, MSE_stats_list){
   length <- ncol(MSE_list$MSE_PCR)
+  plots <- c()
   
   for(i in 1:length){
-    boxplot(
+    plots[i] <- boxplot(
       MSE_list$MSE_PCR[, i],
       MSE_list$MSE_PLSR[, i],
       names = c("PCR", "PLSR"),
       main = paste("MSE for PCR and PLS", "\n", simulation_factor_loadings_description[i]),
       cex.main=0.9,
       sub = paste(
-        "(Change in % MSE b/n PCR PLSR): ",
+        "(Change in % MSE b/n PCR and PLSR): ",
         MSE_stats_list$MSE_percentage_change[i],
         "%"
       ),
@@ -77,5 +78,7 @@ plot_MSE_comparison_boxplot <- function(MSE_list, MSE_stats_list){
       border = "black"
     )
   }
+  
+  return(plots)
   
 }

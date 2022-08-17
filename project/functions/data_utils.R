@@ -1,3 +1,34 @@
+introduce_correlations <- function(data, transformation_length, max_el = NULL){
+  len <- length(data)
+  max_el <- if(is.null(max_el)) max(data) else max_el
+  
+  result <- data[sample(len, 1)] * seq(
+    from = max_el,
+    to = sd(data),
+    len = transformation_length)
+  
+  # result <- exp(log(0.8) * seq(
+  #   from = max_el,
+  #   to = sd(data), 
+  #   len = transformation_length))
+  
+  
+  return(result)
+}
+
+
+# Transform the erorr term using the formula
+# sqrt(c * N) * et
+# Where c
+# c = (1 + r)˜c
+# r is a number of factors?
+get_transformed_error_term <- function(r, c_tilde, N, eps){
+  c <- (1 + r) * c_tilde
+  eps_transformed <- sqrt(c * N) * eps
+  
+  return(eps_transformed)
+}
+
 remove_columns <- function(data_frame, column_names_to_remove) {
   if (is.data.frame(data_frame) == FALSE) {
     # check if given object is of type time series
