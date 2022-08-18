@@ -7,9 +7,9 @@ output:
   pdf_document:
     toc: true
     number_sections: true
-fontsize: "11pt"
+fontsize: 12pt
 geometry: "margin=1in"
-urlcolor: "blue"
+urlcolor: blue
 ---
 
 ```{r setup, include=FALSE} 
@@ -18,20 +18,88 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 
 # Introduction
 Economic phenomena, both micro and macro, has always been influenced by a large number of variables. Difficulties in data collection and lack of computational power in the past imposed usage of small structural models for forecasting. Nowadays we can employ several techniques and methods to forecast economic variables using high-dimensional data. Principal component analysis(PCA) is a wildly common method for dimension reduction. The basic idea is to transform the original data in such way as to use smaller number of factors in our prediction instead of the original number of variables. Partial Least Squares(PLS) constructs the factors such that the covariance between the factors and the target variable is maximized. My goal with this project is to explore the kinds of data structure where PCA performs poorly. In the literature one of the cases studied is high-dimensional data where one variable is highly important for the target variable and the other variables are not. The many noisy variables tend to  mask the signal in the leading variable when constructing the factors, leading to worse prediction.
-The project is organized into Theoretical background section and simulation and empirical application sections. For the lather sections I take guidance from [J. Groen, G. Kapetanios 2008](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1136165) and use data set from [Stock and Watson (2009)](https://scholar.harvard.edu/stock/publications/forecasting-dynamic-factor-models-subject-structural-instability).
+The project is organized into Theoretical background section and simulation and empirical application sections. For the lather sections I take guidance from [\textcolor{blue}{J. Groen, G. Kapetanios (2008)}](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1136165) and use data set from [\textcolor{blue}{Stock and Watson (2009)}](https://scholar.harvard.edu/stock/publications/forecasting-dynamic-factor-models-subject-structural-instability).
 
 # Theorethical background of PCA and PLS
+The first workings in PCA are from Pearson (1901) and later Hotelling (1933). Decades after its creation, the developments in the method were focused on theory. The first applications to real data were done in the 60s with data sets containing 11-15 variables. Nowadays, PCA is used in variety of academic disciplines, industrial organizations and government agencies.
 
+## Principal component analysis
+Given an ${n}\times{p}$ matrix $X$ PCA creates orthogonal linear combinations of the columns of $X$ and finds the projections which maximize the variance. The first principal component contains projections along the direction with the most variance. We derive principal components by decomposing the matrix $X$ and deriving the eigen vectors. An $m \times n$ matrix $M$ can be written in the form
 
-```{r eval = FALSE, echo = FALSE, message = FALSE, warning=FALSE}
+\[
+  \makebox[\linewidth]{$\displaystyle
+  \begin{aligned}
+    M = U \Sigma V^{*}
+  \end{aligned}
+  $}
+\]
+
+$U$ being an $m \times n$ unitary matrix, $\Sigma$ is a diagonal $m \times n$ matrix, $V$ is an $n \times n$ unitary matrix and $V^{*}$ is the conjugate transpose of $V$, also unitary.
+In a similar manner, our data matrix $X$ can be decomposed as
+
+\[
+  \makebox[\linewidth]{$\displaystyle
+  \begin{aligned}
+      X &= U\Sigma V^{*}  \\
+      X^{T}X &= (U\Sigma V^{*})^{T} (U\Sigma V^{*}) \\
+      (X^{T}X)V &= V \Sigma^{2} V^{*}V \\
+      (X^{T}X)V &= V \Sigma^{2}
+  \end{aligned}
+  $}
+\]
+
+where $V$ is the matrix of eigen vectors of $X^{T}X$ and $\Sigma^{2}$ is the square matrix with eigen values in the diagonal. The eigen vectors are sorted by eigen values from biggest to lowest.
+Now, with our eigen vectors sorted, we can project $X$ on the new space 
+\[
+  \begin{aligned}
+    Z&=XV
+  \end{aligned}
+\]
+
+The elements of $V$ are called principal component loadings.
+The columns of $Z$ are the principal components and the elements of $Z$, $z_{i1}, ... , z_{in}$ are the principal component scores.
+Thus, the first principal component contains up to $N - 1$ of the original columns of $X$
+
+\[
+  \begin{aligned}
+    Z_{1} = \phi_{11}X_{1} + \phi_{21}X_{2} + ... + \phi_{N-1,1}X_{N-1}
+  \end{aligned}
+\]
+
+Couple of assumptions need to be made for PCA to perform well.
+First, the original data needs to be standardized in order to compare the covariance between variables. Secondly, data needs to be linear, proper transformations to the original data have to be performed when this is not the case. Thirdly, the data should not have too many outliers - PCA will give more weight to highly variable features even if the variance is governed by a few outliers. 
+
+## Partial Least Squares
+PCA creates linear combinations that represent the original data without including the target variable. Directions that explain the original data best does not necessarily translate to directions in the data which predict the response well.
+PLS is an alternative dimension reduction method that takes the response variable into account. PLS identifies a set of features $Z_{1},...Z_{M}$ that are linear combinations of the original features and then fits a linear model using the new set of $M$ features. Unlike PCR, PLS will not only create features that best represent the original data but also creates features that are related to the response variable. The first component in PLS is calculated by setting each principal component loading $\phi_{j1}$ to the coefficient from the linear regression of $Y$ onto $X_{j}$. The highest PLS loadings correspond to the variables that are strongly related to $Y$.
+In a high-dimensional setting where one or couple of variables explains the target variable well, we'll expect PLS to outperform PCR.
+
+# Simulation
+The simulation study is inspired by J. Groen, G. Kapetanios (2008). In the paper the authors compare PCR to PLS and Bayesian regression in data with different factor structures. I compare only PCR to PLS and leave Bayesian regression out. 
+
+## Setup
+One of the issues with principal components extracted from large number of variables is that there is no guarantee that the components will forecast the target variable well. Boivin an Ng (2006) show that if the forecasting accuracy is driven by a certain factor, this factor can be dominated by other non-informative factors in a large data set. I simulate high dimensional data with different correlation structure under five cases: 
+
+1. Data set where one variable is highly related with the outcome variable. 
+2. Data set where 1/3 of the variables are highly correlated. 
+3. Data set where 10% of the variables are highly correlated. 
+4. Data set where all variables are highly correlated. 
+5. Data set with no high correlation between variables. 
+
+The coefficients $\beta$ are generated randomly and transformed according to the cases. In the first case, I inflate the first coefficient when creating the response variable. In the other cases I inflate the coefficients proportionally to the transformed variables, where in the fifth case the proportion is 0 and the coefficients are left without transformation.
+
+The simulations are performed using $N = 100, 200, 400, 192$ as number of observations, $p = 20, 100, 108$ as number of variables and are run 100 times, with exception of one simulation which was run for 1000 times to test the asymptotic properties.
+
+![Simulation 8](images/simulation_1/simulation8.pdf){width=100%} 
+```{r eval = TRUE, echo = TRUE, message = FALSE, warning=FALSE}
 library("pls") # PCA and PLS regression
+library("corrplot") # create correlation plots
 library("readxl") # read Excel files
 library("MASS")
-library("esquisse") # addin for data visualization
 library("xts") #time series conversion
 library("zoo") # time series
 ```
-# Simulation
+
 ```{r, eval = FALSE, echo = FALSE, message = FALSE, warning=FALSE}
 source("functions/constants.R")
 source("functions/data_utils.R")
@@ -134,9 +202,60 @@ par(mfrow = c(3, 2))
 plot_MSE_comparison_boxplot(simulation5$result , simulation5$MSE_stats)
 dev.off()
 
-```
+# Simulation 6: N = 200, p = 100, ncomp = 3 ----
+simulation6 <- new.env()
 
-![Simulation 1](images/simulation_1/simulation1.pdf){width=65%}  
+simulation6$sim_option <- simulation_option_default 
+simulation6$sim_option$N <- 200
+simulation6$sim_option$p <- 100
+simulation6$sim_option$ncomp <- 3
+
+simulation6$result <- simulation(dgp_option_list = dgp_option_default, simulation_option_list = simulation6$sim_option)
+
+simulation6$MSE_stats <- save_mean_mse_and_return_stats(simulation6$result)
+
+pdf(file = "images/simulation_1/simulation6.pdf")
+par(mfrow = c(3, 2))
+plot_MSE_comparison_boxplot(simulation6$result , simulation6$MSE_stats)
+dev.off()
+
+# Simulation 7: N = 200, p = 100, ncomp = 1 ----
+simulation7 <- new.env()
+
+simulation7$sim_option <- simulation_option_default 
+simulation7$sim_option$N <- possible_N[2]
+simulation7$sim_option$p <- 100
+simulation7$sim_option$ncomp <- 1
+
+simulation7$result <- simulation(dgp_option_list = dgp_option_default, simulation_option_list = simulation7$sim_option)
+
+simulation7$MSE_stats <- save_mean_mse_and_return_stats(simulation7$result)
+
+pdf(file = "images/simulation_1/simulation7.pdf")
+par(mfrow = c(3, 2))
+plot_MSE_comparison_boxplot(simulation7$result , simulation7$MSE_stats)
+dev.off()
+
+# Simulation 8: N = 192, p = 108, ncomp = 6, runs = 1000 ----
+simulation8 <- new.env()
+
+simulation8$sim_option <- simulation_option_default 
+simulation8$sim_option$N <- 192
+simulation8$sim_option$p <- 108
+simulation8$sim_option$runs <- 1000
+simulation8$sim_option$ncomp <- 6
+
+simulation8$result <- simulation(dgp_option_list = dgp_option_default, simulation_option_list = simulation8$sim_option)
+
+simulation8$MSE_stats <- save_mean_mse_and_return_stats(simulation8$result)
+
+pdf(file = "images/simulation_1/simulation8.pdf")
+par(mfrow = c(3, 2))
+plot_MSE_comparison_boxplot(simulation8$result , simulation8$MSE_stats)
+dev.off()
+
+```
+ 
 
 
 # Empirical Applicaiton
