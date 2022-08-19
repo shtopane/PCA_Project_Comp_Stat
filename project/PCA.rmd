@@ -1,5 +1,5 @@
 ---
-title: "Principal Components and Partial Least Squares analysis in data with different correlation structure."
+title: "Principal Components and Partial Least Squares analysis in data with different correlation structure"
 subtitle: "Computational Statistics, University of Bonn 2022"
 author: "Krasimira Kirilova"
 date: "August 23, 2022"
@@ -88,9 +88,32 @@ One of the issues with principal components extracted from large number of varia
 
 The coefficients $\beta$ are generated randomly and transformed according to the cases. In the first case, I inflate the first coefficient when creating the response variable. In the other cases I inflate the coefficients proportionally to the transformed variables, where in the fifth case the proportion is 0 and the coefficients are left without transformation.
 
-The simulations are performed using $N = 100, 200, 400, 192$ as number of observations, $p = 20, 100, 108$ as number of variables and are run 100 times, with exception of one simulation which was run for 1000 times to test the asymptotic properties.
+The simulations are performed using $N = 100, 200, 400, 192$ as number of observations, $p = 20, 100, 108$ as number of variables and are run 100 times, with exception of one simulation which was run for 1000 times. Models are evaluated on a training set, representing 1/2 of the sample, and predictions are made on a test set.
 
-![Simulation 8](images/simulation_1/simulation8.pdf){width=100%} 
+<center>
+![Data and correlation structure Case 1](images/data_plots/Y_and_variance 1 .pdf){width=80%}
+</center>
+<!-- ![Data and correlation structure Case 2](images/data_plots/Y_and_variance 2 .pdf){width=50%} -->
+
+<!-- ![Data and correlation structure Case 3](images/data_plots/Y_and_variance 3 .pdf){width=50%} -->
+
+<!-- ![Data and correlation structure Case 4](images/data_plots/Y_and_variance 4 .pdf){width=50%}   -->
+
+<!-- ![Data and correlation structure Case 5](images/data_plots/Y_and_variance 5 .pdf){width=80%}   -->
+
+
+## Simulation Results
+
+### Results without setting the number of components used for prediction
+
+In the first four simulations I vary $N$ through $N = 100, 200, 400$ and set the number of variables at $p = 20, 100$ where $p = 20$ for the first three simulations and $p = 100$ for the last one. The number of principal components used are determined by the number of components which correspond to the minimum RMSEP of the model. The change in MSE between PCR and PLSR is not quite different between the simulations, where PLSR outperforms PCR in all cases except data set with 10% of the variables are highly correlated. Both methods use 2/3 number components out of available variables in prediction on average. Poorer performance of PLSR may be attributed to bias in the regression coefficients used in constructing the principal component. Also, the small MSE in both models signals overfitting. Overall, with 2/3 variables used the difference between the methods is negligible. PLSR achieves lower MSE since it uses the response variable to construct the principal components.
+
+### Results with setting the number of principal components used for prediction
+In next simulations, $N$ is set to $200, 192$, $p$ to $100, 108$ and the number of principal components used for prediction is varying $r = 1, 3, 6$. One simulation runs for 1000 times, all others for 100. $N = 192$ and $p = 108$ are chosen out of our real data set where we have 192 observations and 108 variables.
+
+When using smaller number of components again PLSR outperforms PCR in almost all cases. The only case where PCR performs better is in the case where all variables are correlated - this case is most likely to lead to overfitting compared to other cases, but even in this case when we increase the number of principal components used to six, the difference in MSE between PCR and PLSR drops to 0. PLSR performs better with less principal components used - PLSR gives way smaller MSE for one principal components used than PCR. This is not surprising given the workings of PLSR. For the most extreme cases - case where one variable is the most important for the target variable and where there is not leading variable explaining the target variable - PLSR again outperforms PCR. Mean MSE for cases 1 and 5 over simulations with different number of components used for PLSR are 40 and 73 respectively. For PCR the results are 107 mean MSE over simulations in case 1 and 73 mean MSE for case 5.  
+
+<!-- ![Simulation 8](images/simulation_1/simulation8.pdf){width=100%}  -->
 ```{r eval = TRUE, echo = TRUE, message = FALSE, warning=FALSE}
 library("pls") # PCA and PLS regression
 library("corrplot") # create correlation plots
@@ -115,12 +138,15 @@ dgp_option_default <- list(BETAS_INCREASE_FACTOR = 4)
 
 simulation1 <- new.env()
 
+
 simulation1$result <-
   simulation(dgp_option_list = dgp_option_default,
              simulation_option_list = simulation_option_default)
 # Compute mean statistics from simulation
 simulation1$MSE_stats <-
   save_mean_mse_and_return_stats(simulation1$result)
+
+save(simulation1, file = "simulation1.RData")
 
 pdf(file = "images/simulation_1/simulation1.pdf")
 par(mfrow = c(3, 2))
@@ -140,9 +166,16 @@ simulation2$result <-
 simulation2$MSE_stats <-
   save_mean_mse_and_return_stats(simulation2$result)
 
+save(simulation2, file = "simulation2.RData")
+
+simulation2$result_cleared <- simulation2$result
+# Remove outlier
+simulation2$result_cleared$MSE_PLSR <- simulation2$result_cleared$MSE_PLSR[-79, ]
+simulation2$result_cleared$MSE_PCR <- simulation2$result_cleared$MSE_PCR[-79, ]
+
 pdf(file = "images/simulation_1/simulation2.pdf")
 par(mfrow = c(3, 2))
-plot_MSE_comparison_boxplot(simulation2$result, simulation2$MSE_stats)
+plot_MSE_comparison_boxplot(simulation2$result_cleared, simulation2$MSE_stats)
 dev.off()
 
 # Simulation 3: N = 400, p = 20, use optimal number of components ----
@@ -157,6 +190,8 @@ simulation3$result <-
 
 simulation3$MSE_stats <-
   save_mean_mse_and_return_stats(simulation3$result)
+
+save(simulation3, file = "simulation3.RData")
 
 pdf(file = "images/simulation_1/simulation3.pdf")
 par(mfrow = c(3, 2))
@@ -176,6 +211,8 @@ simulation4$result <-
 
 simulation4$MSE_stats <-
   save_mean_mse_and_return_stats(simulation4$result)
+
+save(simulation4, file = "simulation4.RData")
 
 pdf(file = "images/simulation_1/simulation4.pdf")
 par(mfrow = c(3, 2))
@@ -197,6 +234,8 @@ simulation5$result <-
 simulation5$MSE_stats <-
   save_mean_mse_and_return_stats(simulation5$result)
 
+save(simulation5, file = "simulation5.RData")
+
 pdf(file = "images/simulation_1/simulation5.pdf")
 par(mfrow = c(3, 2))
 plot_MSE_comparison_boxplot(simulation5$result , simulation5$MSE_stats)
@@ -214,6 +253,8 @@ simulation6$result <- simulation(dgp_option_list = dgp_option_default, simulatio
 
 simulation6$MSE_stats <- save_mean_mse_and_return_stats(simulation6$result)
 
+save(simulation6, file = "simulation6.RData")
+
 pdf(file = "images/simulation_1/simulation6.pdf")
 par(mfrow = c(3, 2))
 plot_MSE_comparison_boxplot(simulation6$result , simulation6$MSE_stats)
@@ -230,6 +271,8 @@ simulation7$sim_option$ncomp <- 1
 simulation7$result <- simulation(dgp_option_list = dgp_option_default, simulation_option_list = simulation7$sim_option)
 
 simulation7$MSE_stats <- save_mean_mse_and_return_stats(simulation7$result)
+
+save(simulation7, file = "simulation7.RData")
 
 pdf(file = "images/simulation_1/simulation7.pdf")
 par(mfrow = c(3, 2))
@@ -253,7 +296,67 @@ pdf(file = "images/simulation_1/simulation8.pdf")
 par(mfrow = c(3, 2))
 plot_MSE_comparison_boxplot(simulation8$result , simulation8$MSE_stats)
 dev.off()
+# Simulation 9: N = 192, p = 108, ncomp = 6, runs = 100 ----
+simulation9 <- new.env()
 
+simulation9$sim_option <- simulation_option_default 
+simulation9$sim_option$N <- 192
+simulation9$sim_option$p <- 108
+
+simulation9$sim_option$ncomp <- 6
+
+simulation9$result <- simulation(dgp_option_list = dgp_option_default, simulation_option_list = simulation9$sim_option)
+
+simulation9$MSE_stats <- save_mean_mse_and_return_stats(simulation9$result)
+
+pdf(file = "images/simulation_1/simulation9.pdf")
+par(mfrow = c(3, 2))
+plot_MSE_comparison_boxplot(simulation9$result , simulation9$MSE_stats)
+dev.off()
+# Simulation 10: N = 192, p = 108, ncomp = 3, runs = 100 ----
+simulation10 <- new.env()
+
+simulation10$sim_option <- simulation_option_default 
+simulation10$sim_option$N <- 192
+simulation10$sim_option$p <- 108
+
+simulation10$sim_option$ncomp <- 3
+
+simulation10$result <- simulation(dgp_option_list = dgp_option_default, simulation_option_list = simulation10$sim_option)
+
+simulation10$MSE_stats <- save_mean_mse_and_return_stats(simulation10$result)
+
+pdf(file = "images/simulation_1/simulation10.pdf")
+par(mfrow = c(3, 2))
+plot_MSE_comparison_boxplot(simulation10$result , simulation10$MSE_stats)
+dev.off()
+
+# Simulation 11: N = 192, p = 108, ncomp = 1, runs = 100 ----
+simulation11 <- new.env()
+
+simulation11$sim_option <- simulation_option_default 
+simulation11$sim_option$N <- 192
+simulation11$sim_option$p <- 108
+
+simulation11$sim_option$ncomp <- 1
+
+simulation11$result <- simulation(dgp_option_list = dgp_option_default, simulation_option_list = simulation11$sim_option)
+
+simulation11$MSE_stats <- save_mean_mse_and_return_stats(simulation11$result)
+
+pdf(file = "images/simulation_1/simulation11.pdf")
+par(mfrow = c(3, 2))
+plot_MSE_comparison_boxplot(simulation11$result , simulation11$MSE_stats)
+dev.off()
+
+
+# TEST ----
+test <- new.env()
+test$sim_option <- simulation_option_default
+test$sim_option$runs <- 1
+test$sim_option$N <- 20
+test$sim_option$p <- 15
+test$result <- simulation(dgp_option_list = dgp_option_default, simulation_option_list = test$sim_option)
 ```
  
 

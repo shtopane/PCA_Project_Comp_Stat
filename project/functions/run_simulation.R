@@ -170,6 +170,7 @@ simulation <-
             N = N,
             variable_count = p,
             mu = mu,
+            case = j,
             inflate_beta = inflate_beta,
             error_term_constant = dgp_option_list$error_term_constant,
             BETAS_INCREASE_FACTOR = dgp_option_list$BETAS_INCREASE_FACTOR,
