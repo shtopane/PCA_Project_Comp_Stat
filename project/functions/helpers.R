@@ -20,6 +20,11 @@ get_optimal_num_of_components <- function(PCR_object) {
   return(PCR_object_min_comp)
 }
 
+get_percantage_change_MSE <- function(first_mean, second_mean){
+  result <- ((first_mean - second_mean)/first_mean) * 100
+  return(result)
+}
+
 save_mean_mse_and_return_stats <- function(MSE_list) {
   length <- ncol(MSE_list$MSE_PCR)
   MSE_PCR_mean <- rep(0, length)

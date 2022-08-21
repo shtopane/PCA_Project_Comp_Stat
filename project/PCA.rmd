@@ -381,7 +381,7 @@ load(file = "../data/data/WORKING_DATA.rda")
 # (aggregate) unemployment rate
 # (effective) federal funds rate
 variables_to_predict <- c("CPIAUCSL", "IPS10", "LHUR", "FYFF")
-h <- c(3, 12, 24)
+h <- 12 # c(3, 12, 24)
 PCR_ncomp <- c(2, 4, 6)
 PLSR_ncomp <- c(1, 2, 3)
 # END CONSTANTS ----
@@ -395,17 +395,193 @@ train_data_ts <- get_transformed_time_series(WORKING_DATA, enddate = train_end_d
 data_as_ts <- get_transformed_time_series(WORKING_DATA, enddate = data_end_date)
 
 plot.ts(train_data_ts[, variables_to_predict])
-ts_cor <- cor(WORKING_DATA$rawdata)
-# Try do to PCA on the whole dataset, all components
+
+
 set.seed(2456)
-PCR <- pcr(variables_to_predict ~ ., data = train_data_ts, scale = TRUE, validation = CV)
+train_data_ts_cleared <- train_data_ts[-(is.na(train_data_ts) == TRUE), ]
+
+pcr <- new.env()
+pcr$CPIAUCSL_model <- pcr(CPIAUCSL ~ ., data = train_data_ts, scale = TRUE, validation = "CV")
+pcr$IPS10_model <- pcr(IPS10 ~ ., data = train_data_ts, scale = TRUE, validation = "CV")
+pcr$LHUR_model <- pcr(LHUR ~ ., data = train_data_ts, scale = TRUE, validation = "CV")
+pcr$FYFF_model <- pcr(FYFF ~ ., data = train_data_ts, scale = TRUE, validation = "CV")
+
+# get_optimal_num_of_components(pcr$CPIAUCSL_model)
+# plot(RMSEP(pcr$CPIAUCSL_model))
+# 
+# get_optimal_num_of_components(pcr$IPS10_model)
+# plot(RMSEP(pcr$IPS10_model))
+# 
+# get_optimal_num_of_components(pcr$LHUR_model)
+# plot(RMSEP(pcr$LHUR_model))
+# 
+# get_optimal_num_of_components(pcr$FYFF_model)
+# plot(RMSEP(pcr$FYFF_model))
+
+plsr <- new.env()
+plsr$CPIAUCSL_model <- plsr(CPIAUCSL ~ ., data = train_data_ts, scale = TRUE, validation = "CV")
+plsr$IPS10_model <- plsr(IPS10 ~ ., data = train_data_ts, scale = TRUE, validation = "CV")
+plsr$LHUR_model <- plsr(LHUR ~ ., data = train_data_ts, scale = TRUE, validation = "CV")
+plsr$FYFF_model <- plsr(FYFF ~ ., data = train_data_ts, scale = TRUE, validation = "CV")
+
+# get_optimal_num_of_components(plsr$CPIAUCSL_model)
+# plot(RMSEP(plsr$CPIAUCSL_model))
+# 
+# get_optimal_num_of_components(plsr$IPS10_model)
+# plot(RMSEP(plsr$IPS10_model))
+# 
+# get_optimal_num_of_components(plsr$LHUR_model)
+# plot(RMSEP(plsr$LHUR_model))
+# 
+# get_optimal_num_of_components(plsr$FYFF_model)
+# plot(RMSEP(plsr$FYFF_model))
+
+# end date: string_date_to_vector_date("2006-10-01")
+application <- new.env()
+application$first_sample_period <- list(startdate =
+                                           string_date_to_vector_date("1972-01-01"),
+                                         enddate = data_end_date)
+application$second_sample_period <- list(startdate =
+                                           string_date_to_vector_date("1972-01-01"),
+                                         enddate = string_date_to_vector_date("1984-10-01"))
+
+application$third_sample_period <- list(startdate =
+                                           string_date_to_vector_date("1985-01-01"),
+                                         enddate = data_end_date)
+application$first_sample <-
+  window(
+    data_as_ts,
+    start = application$first_sample_period$startdate,
+    end = application$first_sample_period$enddate
+  )
+
+application$second_sample <-
+  window(
+    data_as_ts,
+    start = application$second_sample_period$startdate,
+    end = application$second_sample_period$enddate
+  )
+
+application$third_sample <-
+  window(
+    data_as_ts,
+    start = application$third_sample_period$startdate,
+    end = application$third_sample_period$enddate
+  )
+
+
+# application$bla <- window(application$first_sample, end = application$first_sample_period$startdate[1] + 5)
+application$bla <- window(application$first_sample, end = application$first_sample_period$startdate[1] + 1)
+application$first_sample_runs <- (nrow(application$first_sample) / 4)
+
+
+pcr$CPIAUCSL_model$MSE <- matrix(nrow = application$first_sample_runs, ncol = 3, dimnames = list(NULL, PCR_ncomp))
+pcr$FYFF_model$MSE <- matrix(nrow = application$first_sample_runs, ncol = 3, dimnames = list(NULL, PCR_ncomp))
+pcr$IPS10_model$MSE <- matrix(nrow = application$first_sample_runs, ncol = 3, dimnames = list(NULL, PCR_ncomp))
+pcr$LHUR_model$MSE <- matrix(nrow = application$first_sample_runs, ncol = 3, dimnames = list(NULL, PCR_ncomp))
+
+plsr$CPIAUCSL_model$MSE <- matrix(nrow = application$first_sample_runs, ncol = 3, dimnames = list(NULL, PLSR_ncomp))
+plsr$FYFF_model$MSE <- matrix(nrow = application$first_sample_runs, ncol = 3, dimnames = list(NULL, PLSR_ncomp))
+plsr$IPS10_model$MSE <- matrix(nrow = application$first_sample_runs, ncol = 3, dimnames = list(NULL, PLSR_ncomp))
+plsr$LHUR_model$MSE <- matrix(nrow = application$first_sample_runs, ncol = 3, dimnames = list(NULL, PLSR_ncomp))
+
+# IPS10
+for(i in 1:(nrow(application$first_sample) / 4)){
+  application$bla <- window(application$first_sample, end = application$first_sample_period$startdate[1] + i)
+  print(tail(zoo::as.Date(application$bla), n = 1))
+  
+  application$CPIAUCSL_model$x <- model.matrix(CPIAUCSL ~ ., data = application$bla)[, -1]
+  application$CPIAUCSL_model$y <- application$bla[, "CPIAUCSL"]
+  
+  application$FYFF_model$x <- model.matrix(FYFF ~ ., data = application$bla)[, -1]
+  application$FYFF_model$y <- application$bla[, "FYFF"]
+  
+  application$IPS10_model$x <- model.matrix(IPS10 ~ ., data = application$bla)[, -1]
+  application$IPS10_model$y <- application$bla[, "IPS10"]
+  
+  application$LHUR_model$x <- model.matrix(LHUR ~ ., data = application$bla)[, -1]
+  application$LHUR_model$y <- application$bla[, "LHUR"]
+        
+  for(j in PCR_ncomp){
+    pcr$CPIAUCSL_model$predicted <-
+      predict(pcr$CPIAUCSL_model, application$CPIAUCSL_model$x, ncomp = j)
+    pcr$CPIAUCSL_model$MSE[i, as.character(j)] <-
+      get_MSE(pcr$CPIAUCSL_model$predicted, application$CPIAUCSL_model$y)
+    
+    pcr$FYFF_model$predicted <-
+      predict(pcr$FYFF_model, application$FYFF_model$x, ncomp = j)
+    pcr$FYFF_model$MSE[i, as.character(j)] <-
+      get_MSE(pcr$FYFF_model$predicted, application$FYFF_model$y)
+    
+    pcr$IPS10_model$predicted <-
+      predict(pcr$IPS10_model, application$IPS10_model$x, ncomp = j)
+    pcr$IPS10_model$MSE[i, as.character(j)] <-
+      get_MSE(pcr$IPS10_model$predicted, application$IPS10_model$y)
+    
+    pcr$LHUR_model$predicted <-
+      predict(pcr$LHUR_model, application$LHUR_model$x, ncomp = j)
+    pcr$LHUR_model$MSE[i, as.character(j)] <-
+      get_MSE(pcr$LHUR_model$predicted, application$LHUR_model$y)
+    
+   
+  }
+  
+  for(g in PLSR_ncomp){
+     plsr$CPIAUCSL_model$predicted <-
+      predict(plsr$CPIAUCSL_model, application$CPIAUCSL_model$x, ncomp = g)
+    plsr$CPIAUCSL_model$MSE[i, as.character(g)] <-
+      get_MSE(plsr$CPIAUCSL_model$predicted, application$CPIAUCSL_model$y)
+    
+    plsr$FYFF_model$predicted <-
+      predict(plsr$FYFF_model, application$FYFF_model$x, ncomp = g)
+    plsr$FYFF_model$MSE[i, as.character(g)] <-
+      get_MSE(plsr$FYFF_model$predicted, application$FYFF_model$y)
+    
+    plsr$IPS10_model$predicted <-
+      predict(plsr$IPS10_model, application$IPS10_model$x, ncomp = g)
+    plsr$IPS10_model$MSE[i, as.character(g)] <-
+      get_MSE(plsr$IPS10_model$predicted, application$IPS10_model$y)
+    
+    plsr$LHUR_model$predicted <-
+      predict(plsr$LHUR_model, application$LHUR_model$x, ncomp = g)
+    plsr$LHUR_model$MSE[i, as.character(g)] <-
+      get_MSE(plsr$LHUR_model$predicted, application$LHUR_model$y)
+  }
+}
+
+for(h in names(pcr)){
+  pcr[[h]]$MSE_mean <- rep(0, length(PCR_ncomp))
+  names(pcr[[h]]$MSE_mean) <- PCR_ncomp
+  
+  for (hhh in PCR_ncomp) {
+    pcr[[h]]$MSE_mean[as.character(hhh)] <-
+      mean(pcr[[h]]$MSE[, as.character(hhh)])
+  }
+}
+
+
+for(k in names(plsr)){
+  plsr[[k]]$MSE_mean <- rep(0, length(PLSR_ncomp))
+  names(plsr[[k]]$MSE_mean) <- PLSR_ncomp
+  
+  for(hh in PLSR_ncomp){
+    plsr[[k]]$MSE_mean[as.character(hh)] <- mean(plsr[[k]]$MSE[, as.character(hh)])
+  }
+}
+
+application$percentage_change_PCR_PLSR <- list()
+
+for(l in names(pcr)){
+  application$percentage_change_PCR_PLSR[[l]] <- mapply(get_percantage_change_MSE, pcr[[l]]$MSE_mean, plsr[[l]]$MSE_mean)
+}
+
 # prediction_var <- data_as_ts[, variables_to_predict]
 # data_as_ts <- remove_columns(data_as_ts, variables_to_predict)
 # result <- pcr(prediction_var ~ ., data = data_as_ts, scale = TRUE, validaiton = CV)
 # summary(result)
 # validationplot(result, val.type = "MSEP")
 
-# IPS10_pca <- pcr(IPS10 ~ ., data = data_as_ts, scale = TRUE, validation = "CV", ncomp = 5)
+IPS10_pca <- pcr(IPS10 ~ ., data = data_as_ts, scale = TRUE, validation = "CV", ncomp = 5)
 
 # summary(IPS10_pca)
 # plot(
