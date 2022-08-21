@@ -486,27 +486,37 @@ plsr$IPS10_model$MSE <- matrix(nrow = application$first_sample_runs, ncol = 3, d
 plsr$LHUR_model$MSE <- matrix(nrow = application$first_sample_runs, ncol = 3, dimnames = list(NULL, PLSR_ncomp))
 
 # IPS10
-for(i in 1:(nrow(application$first_sample) / 4)){
-  application$bla <- window(application$first_sample, end = application$first_sample_period$startdate[1] + i)
-  print(tail(zoo::as.Date(application$bla), n = 1))
+for(i in 1:(nrow(application$first_sample) / 4)) {
+  application$first_sample_pred <-
+    window(application$first_sample,
+           end = application$first_sample_period$startdate[1] + i)
   
-  application$CPIAUCSL_model$x <- model.matrix(CPIAUCSL ~ ., data = application$bla)[, -1]
-  application$CPIAUCSL_model$y <- application$bla[, "CPIAUCSL"]
+  application$CPIAUCSL_model$x <-
+    model.matrix(CPIAUCSL ~ ., data = application$first_sample_pred)[, -1]
+  application$CPIAUCSL_model$y <-
+    application$first_sample_pred[, "CPIAUCSL"]
   
-  application$FYFF_model$x <- model.matrix(FYFF ~ ., data = application$bla)[, -1]
-  application$FYFF_model$y <- application$bla[, "FYFF"]
+  application$FYFF_model$x <-
+    model.matrix(FYFF ~ ., data = application$first_sample_pred)[, -1]
+  application$FYFF_model$y <-
+    application$first_sample_pred[, "FYFF"]
   
-  application$IPS10_model$x <- model.matrix(IPS10 ~ ., data = application$bla)[, -1]
-  application$IPS10_model$y <- application$bla[, "IPS10"]
+  application$IPS10_model$x <-
+    model.matrix(IPS10 ~ ., data = application$first_sample_pred)[, -1]
+  application$IPS10_model$y <-
+    application$first_sample_pred[, "IPS10"]
   
-  application$LHUR_model$x <- model.matrix(LHUR ~ ., data = application$bla)[, -1]
-  application$LHUR_model$y <- application$bla[, "LHUR"]
-        
-  for(j in PCR_ncomp){
+  application$LHUR_model$x <-
+    model.matrix(LHUR ~ ., data = application$first_sample_pred)[, -1]
+  application$LHUR_model$y <-
+    application$first_sample_pred[, "LHUR"]
+  
+  for (j in PCR_ncomp) {
     pcr$CPIAUCSL_model$predicted <-
       predict(pcr$CPIAUCSL_model, application$CPIAUCSL_model$x, ncomp = j)
     pcr$CPIAUCSL_model$MSE[i, as.character(j)] <-
-      get_MSE(pcr$CPIAUCSL_model$predicted, application$CPIAUCSL_model$y)
+      get_MSE(pcr$CPIAUCSL_model$predicted,
+              application$CPIAUCSL_model$y)
     
     pcr$FYFF_model$predicted <-
       predict(pcr$FYFF_model, application$FYFF_model$x, ncomp = j)
@@ -523,14 +533,16 @@ for(i in 1:(nrow(application$first_sample) / 4)){
     pcr$LHUR_model$MSE[i, as.character(j)] <-
       get_MSE(pcr$LHUR_model$predicted, application$LHUR_model$y)
     
-   
   }
   
-  for(g in PLSR_ncomp){
-     plsr$CPIAUCSL_model$predicted <-
-      predict(plsr$CPIAUCSL_model, application$CPIAUCSL_model$x, ncomp = g)
+  for (g in PLSR_ncomp) {
+    plsr$CPIAUCSL_model$predicted <-
+      predict(plsr$CPIAUCSL_model,
+              application$CPIAUCSL_model$x,
+              ncomp = g)
     plsr$CPIAUCSL_model$MSE[i, as.character(g)] <-
-      get_MSE(plsr$CPIAUCSL_model$predicted, application$CPIAUCSL_model$y)
+      get_MSE(plsr$CPIAUCSL_model$predicted,
+              application$CPIAUCSL_model$y)
     
     plsr$FYFF_model$predicted <-
       predict(plsr$FYFF_model, application$FYFF_model$x, ncomp = g)
