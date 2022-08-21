@@ -371,44 +371,51 @@ test$result <- simulation(dgp_option_list = dgp_option_default, simulation_optio
 
 # Empirical Applicaiton
 ```{r, results='hide', echo=FALSE, eval = FALSE, message=FALSE}
+
 # Load Data set
 load(file = "../data/data/WORKING_DATA.rda")
-
-# CONSTANTS ----
 
 # Variables to forecast:
 # CPI inflation
 # (aggregate) industrial production, 
 # (aggregate) unemployment rate
 # (effective) federal funds rate
-predictor_variables <- c("CPIAUCSL", "IPS10", "LHUR", "FYFF")
-
+variables_to_predict <- c("CPIAUCSL", "IPS10", "LHUR", "FYFF")
+h <- c(3, 12, 24)
+PCR_ncomp <- c(2, 4, 6)
+PLSR_ncomp <- c(1, 2, 3)
 # END CONSTANTS ----
 
 # Get data set end date(Note: this could be a constant, but again if you change the file now including later years this code will work automatically)
 data_end_date <- tail(zoo::as.Date(WORKING_DATA$rawdata), n = 1)
-transformed_ts <- get_transformed_time_series(WORKING_DATA, enddate = data_end_date)
+data_first_date <- head(zoo::as.Date(WORKING_DATA$rawdata), n = 1)
+train_end_date <- string_date_to_vector_date("1971-10-01") #zoo::as.Date("1971-10-01")
 
+train_data_ts <- get_transformed_time_series(WORKING_DATA, enddate = train_end_date)
+data_as_ts <- get_transformed_time_series(WORKING_DATA, enddate = data_end_date)
+
+plot.ts(train_data_ts[, variables_to_predict])
 ts_cor <- cor(WORKING_DATA$rawdata)
 # Try do to PCA on the whole dataset, all components
-set.seed(2)
-# prediction_var <- transformed_ts[, predictor_variables]
-# transformed_ts <- remove_columns(transformed_ts, predictor_variables)
-# result <- pcr(prediction_var ~ ., data = transformed_ts, scale = TRUE, validaiton = CV)
+set.seed(2456)
+PCR <- pcr(variables_to_predict ~ ., data = train_data_ts, scale = TRUE, validation = CV)
+# prediction_var <- data_as_ts[, variables_to_predict]
+# data_as_ts <- remove_columns(data_as_ts, variables_to_predict)
+# result <- pcr(prediction_var ~ ., data = data_as_ts, scale = TRUE, validaiton = CV)
 # summary(result)
 # validationplot(result, val.type = "MSEP")
 
-IPS10_pca <- pcr(IPS10 ~ ., data = transformed_ts, scale = TRUE, validation = "CV", ncomp = 5)
+# IPS10_pca <- pcr(IPS10 ~ ., data = data_as_ts, scale = TRUE, validation = "CV", ncomp = 5)
 
 # summary(IPS10_pca)
 # plot(
 #   IPS10_pca$scores[, 4], 
-#   transformed_ts[, "IPS10"][1:190],
+#   data_as_ts[, "IPS10"][1:190],
 #   xlab = "PC comp 4 scores",
 #   ylab = "IPS10")
 # plot(
 #   IPS10_pca$scores[, 2], 
-#   transformed_ts[, "IPS10"][1:190],
+#   data_as_ts[, "IPS10"][1:190],
 #   xlab = "PC comp 2 scores",
 #   ylab = "IPS10")
 # biplot(IPS10_pca, which = "loadings")
