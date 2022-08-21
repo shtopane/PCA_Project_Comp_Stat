@@ -146,7 +146,7 @@ simulation1$result <-
 simulation1$MSE_stats <-
   save_mean_mse_and_return_stats(simulation1$result)
 
-save(simulation1, file = "simulation1.RData")
+save(simulation1, file = "simulation_results_Rdata/simulation1.RData")
 
 pdf(file = "images/simulation_1/simulation1.pdf")
 par(mfrow = c(3, 2))
@@ -166,7 +166,7 @@ simulation2$result <-
 simulation2$MSE_stats <-
   save_mean_mse_and_return_stats(simulation2$result)
 
-save(simulation2, file = "simulation2.RData")
+save(simulation2, file = "simulation_results_Rdata/simulation2.RData")
 
 simulation2$result_cleared <- simulation2$result
 # Remove outlier
@@ -191,7 +191,7 @@ simulation3$result <-
 simulation3$MSE_stats <-
   save_mean_mse_and_return_stats(simulation3$result)
 
-save(simulation3, file = "simulation3.RData")
+save(simulation3, file = "simulation_results_Rdata/simulation3.RData")
 
 pdf(file = "images/simulation_1/simulation3.pdf")
 par(mfrow = c(3, 2))
@@ -212,7 +212,7 @@ simulation4$result <-
 simulation4$MSE_stats <-
   save_mean_mse_and_return_stats(simulation4$result)
 
-save(simulation4, file = "simulation4.RData")
+save(simulation4, file = "simulation_results_Rdata/simulation4.RData")
 
 pdf(file = "images/simulation_1/simulation4.pdf")
 par(mfrow = c(3, 2))
@@ -234,7 +234,7 @@ simulation5$result <-
 simulation5$MSE_stats <-
   save_mean_mse_and_return_stats(simulation5$result)
 
-save(simulation5, file = "simulation5.RData")
+save(simulation5, file = "simulation_results_Rdata/simulation5.RData")
 
 pdf(file = "images/simulation_1/simulation5.pdf")
 par(mfrow = c(3, 2))
@@ -253,7 +253,7 @@ simulation6$result <- simulation(dgp_option_list = dgp_option_default, simulatio
 
 simulation6$MSE_stats <- save_mean_mse_and_return_stats(simulation6$result)
 
-save(simulation6, file = "simulation6.RData")
+save(simulation6, file = "simulation_results_Rdata/simulation6.RData")
 
 pdf(file = "images/simulation_1/simulation6.pdf")
 par(mfrow = c(3, 2))
@@ -272,7 +272,7 @@ simulation7$result <- simulation(dgp_option_list = dgp_option_default, simulatio
 
 simulation7$MSE_stats <- save_mean_mse_and_return_stats(simulation7$result)
 
-save(simulation7, file = "simulation7.RData")
+save(simulation7, file = "simulation_results_Rdata/simulation7.RData")
 
 pdf(file = "images/simulation_1/simulation7.pdf")
 par(mfrow = c(3, 2))
@@ -280,7 +280,7 @@ plot_MSE_comparison_boxplot(simulation7$result , simulation7$MSE_stats)
 dev.off()
 
 # Simulation 8: N = 192, p = 108, ncomp = 6, runs = 1000 ----
-simulation8 <- new.env()
+# simulation8 <- new.env()
 
 simulation8$sim_option <- simulation_option_default 
 simulation8$sim_option$N <- 192
@@ -288,7 +288,9 @@ simulation8$sim_option$p <- 108
 simulation8$sim_option$runs <- 1000
 simulation8$sim_option$ncomp <- 6
 
-simulation8$result <- simulation(dgp_option_list = dgp_option_default, simulation_option_list = simulation8$sim_option)
+# simulation8$result <- simulation(dgp_option_list = dgp_option_default, simulation_option_list = simulation8$sim_option)
+
+save(simulation8, file = "simulation_results_Rdata/simulation8.RData")
 
 simulation8$MSE_stats <- save_mean_mse_and_return_stats(simulation8$result)
 
@@ -309,6 +311,8 @@ simulation9$result <- simulation(dgp_option_list = dgp_option_default, simulatio
 
 simulation9$MSE_stats <- save_mean_mse_and_return_stats(simulation9$result)
 
+save(simulation9, file = "simulation_results_Rdata/simulation9.RData")
+
 pdf(file = "images/simulation_1/simulation9.pdf")
 par(mfrow = c(3, 2))
 plot_MSE_comparison_boxplot(simulation9$result , simulation9$MSE_stats)
@@ -325,6 +329,8 @@ simulation10$sim_option$ncomp <- 3
 simulation10$result <- simulation(dgp_option_list = dgp_option_default, simulation_option_list = simulation10$sim_option)
 
 simulation10$MSE_stats <- save_mean_mse_and_return_stats(simulation10$result)
+
+save(simulation10, file = "simulation_results_Rdata/simulation10.RData")
 
 pdf(file = "images/simulation_1/simulation10.pdf")
 par(mfrow = c(3, 2))
@@ -343,6 +349,8 @@ simulation11$sim_option$ncomp <- 1
 simulation11$result <- simulation(dgp_option_list = dgp_option_default, simulation_option_list = simulation11$sim_option)
 
 simulation11$MSE_stats <- save_mean_mse_and_return_stats(simulation11$result)
+
+save(simulation11, file = "simulation_results_Rdata/simulation11.RData")
 
 pdf(file = "images/simulation_1/simulation11.pdf")
 par(mfrow = c(3, 2))
