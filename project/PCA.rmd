@@ -1,0 +1,415 @@
+---
+title: "Principal Components and Partial Least Squares analysis in data with different correlation structure"
+subtitle: "Computational Statistics, University of Bonn 2022"
+author: "Krasimira Kirilova"
+date: "August 23, 2022"
+output: 
+  pdf_document:
+    toc: true
+    number_sections: true
+fontsize: 12pt
+geometry: "margin=1in"
+urlcolor: blue
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+# Introduction
+Economic phenomena, both micro and macro, has always been influenced by a large number of variables. Difficulties in data collection and lack of computational power in the past imposed usage of small structural models for forecasting. Nowadays we can employ several techniques and methods to forecast economic variables using high-dimensional data. Principal component analysis(PCA) is a wildly common method for dimension reduction. The basic idea is to transform the original data in such way as to use smaller number of factors in our prediction instead of the original number of variables. Partial Least Squares(PLS) constructs the factors such that the covariance between the factors and the target variable is maximized. My goal with this project is to explore the kinds of data structure where PCA performs poorly. In the literature one of the cases studied is high-dimensional data where one variable is highly important for the target variable and the other variables are not. The many noisy variables tend to  mask the signal in the leading variable when constructing the factors, leading to worse prediction.
+The project is organized into Theoretical background section and simulation and empirical application sections. For the lather sections I take guidance from [\textcolor{blue}{J. Groen, G. Kapetanios (2008)}](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1136165) and use data set from [\textcolor{blue}{Stock and Watson (2009)}](https://scholar.harvard.edu/stock/publications/forecasting-dynamic-factor-models-subject-structural-instability).
+
+# Theorethical background of PCA and PLS
+The first workings in PCA are from Pearson (1901) and later Hotelling (1933). Decades after its creation, the developments in the method were focused on theory. The first applications to real data were done in the 60s with data sets containing 11-15 variables. Nowadays, PCA is used in variety of academic disciplines, industrial organizations and government agencies.
+
+## Principal component analysis
+Given an ${n}\times{p}$ matrix $X$ PCA creates orthogonal linear combinations of the columns of $X$ and finds the projections which maximize the variance. The first principal component contains projections along the direction with the most variance. We derive principal components by decomposing the matrix $X$ and deriving the eigen vectors. An $m \times n$ matrix $M$ can be written in the form
+
+\[
+  \makebox[\linewidth]{$\displaystyle
+  \begin{aligned}
+    M = U \Sigma V^{*}
+  \end{aligned}
+  $}
+\]
+
+$U$ being an $m \times n$ unitary matrix, $\Sigma$ is a diagonal $m \times n$ matrix, $V$ is an $n \times n$ unitary matrix and $V^{*}$ is the conjugate transpose of $V$, also unitary.
+In a similar manner, our data matrix $X$ can be decomposed as
+
+\[
+  \makebox[\linewidth]{$\displaystyle
+  \begin{aligned}
+      X &= U\Sigma V^{*}  \\
+      X^{T}X &= (U\Sigma V^{*})^{T} (U\Sigma V^{*}) \\
+      (X^{T}X)V &= V \Sigma^{2} V^{*}V \\
+      (X^{T}X)V &= V \Sigma^{2}
+  \end{aligned}
+  $}
+\]
+
+where $V$ is the matrix of eigen vectors of $X^{T}X$ and $\Sigma^{2}$ is the square matrix with eigen values in the diagonal. The eigen vectors are sorted by eigen values from biggest to lowest.
+Now, with our eigen vectors sorted, we can project $X$ on the new space 
+\[
+  \begin{aligned}
+    Z&=XV
+  \end{aligned}
+\]
+
+The elements of $V$ are called principal component loadings.
+The columns of $Z$ are the principal components and the elements of $Z$, $z_{i1}, ... , z_{in}$ are the principal component scores.
+Thus, the first principal component contains up to $N - 1$ of the original columns of $X$
+
+\[
+  \begin{aligned}
+    Z_{1} = \phi_{11}X_{1} + \phi_{21}X_{2} + ... + \phi_{N-1,1}X_{N-1}
+  \end{aligned}
+\]
+
+Couple of assumptions need to be made for PCA to perform well.
+First, the original data needs to be standardized in order to compare the covariance between variables. Secondly, data needs to be linear, proper transformations to the original data have to be performed when this is not the case. Thirdly, the data should not have too many outliers - PCA will give more weight to highly variable features even if the variance is governed by a few outliers. 
+
+## Partial Least Squares
+PCA creates linear combinations that represent the original data without including the target variable. Directions that explain the original data best does not necessarily translate to directions in the data which predict the response well.
+PLS is an alternative dimension reduction method that takes the response variable into account. PLS identifies a set of features $Z_{1},...Z_{M}$ that are linear combinations of the original features and then fits a linear model using the new set of $M$ features. Unlike PCR, PLS will not only create features that best represent the original data but also creates features that are related to the response variable. The first component in PLS is calculated by setting each principal component loading $\phi_{j1}$ to the coefficient from the linear regression of $Y$ onto $X_{j}$. The highest PLS loadings correspond to the variables that are strongly related to $Y$.
+In a high-dimensional setting where one or couple of variables explains the target variable well, we'll expect PLS to outperform PCR.
+
+# Simulation
+The simulation study is inspired by J. Groen, G. Kapetanios (2008). In the paper the authors compare PCR to PLS and Bayesian regression in data with different factor structures. I compare only PCR to PLS and leave Bayesian regression out. 
+
+## Setup
+One of the issues with principal components extracted from large number of variables is that there is no guarantee that the components will forecast the target variable well. Boivin an Ng (2006) show that if the forecasting accuracy is driven by a certain factor, this factor can be dominated by other non-informative factors in a large data set. I simulate high dimensional data with different correlation structure under five cases: 
+
+1. Data set where one variable is highly related with the outcome variable. 
+2. Data set where 1/3 of the variables are highly correlated. 
+3. Data set where 10% of the variables are highly correlated. 
+4. Data set where all variables are highly correlated. 
+5. Data set with no high correlation between variables. 
+
+The coefficients $\beta$ are generated randomly and transformed according to the cases. In the first case, I inflate the first coefficient when creating the response variable. In the other cases I inflate the coefficients proportionally to the transformed variables, where in the fifth case the proportion is 0 and the coefficients are left without transformation.
+
+The simulations are performed using $N = 100, 200, 400, 192$ as number of observations, $p = 20, 100, 108$ as number of variables and are run 100 times, with exception of one simulation which was run for 1000 times. Models are evaluated on a training set, representing 1/2 of the sample, and predictions are made on a test set.
+
+<center>
+![Data and correlation structure Case 1](images/data_plots/Y_and_variance 1 .pdf){width=80%}
+</center>
+<!-- ![Data and correlation structure Case 2](images/data_plots/Y_and_variance 2 .pdf){width=50%} -->
+
+<!-- ![Data and correlation structure Case 3](images/data_plots/Y_and_variance 3 .pdf){width=50%} -->
+
+<!-- ![Data and correlation structure Case 4](images/data_plots/Y_and_variance 4 .pdf){width=50%}   -->
+
+<!-- ![Data and correlation structure Case 5](images/data_plots/Y_and_variance 5 .pdf){width=80%}   -->
+
+
+## Simulation Results
+
+### Results without setting the number of components used for prediction
+
+In the first four simulations I vary $N$ through $N = 100, 200, 400$ and set the number of variables at $p = 20, 100$ where $p = 20$ for the first three simulations and $p = 100$ for the last one. The number of principal components used are determined by the number of components which correspond to the minimum RMSEP of the model. The change in MSE between PCR and PLSR is not quite different between the simulations, where PLSR outperforms PCR in all cases except data set with 10% of the variables are highly correlated. Both methods use 2/3 number components out of available variables in prediction on average. Poorer performance of PLSR may be attributed to bias in the regression coefficients used in constructing the principal component. Also, the small MSE in both models signals overfitting. Overall, with 2/3 variables used the difference between the methods is negligible. PLSR achieves lower MSE since it uses the response variable to construct the principal components.
+
+### Results with setting the number of principal components used for prediction
+In next simulations, $N$ is set to $200, 192$, $p$ to $100, 108$ and the number of principal components used for prediction is varying $r = 1, 3, 6$. One simulation runs for 1000 times, all others for 100. $N = 192$ and $p = 108$ are chosen out of our real data set where we have 192 observations and 108 variables.
+
+When using smaller number of components again PLSR outperforms PCR in almost all cases. The only case where PCR performs better is in the case where all variables are correlated - this case is most likely to lead to overfitting compared to other cases, but even in this case when we increase the number of principal components used to six, the difference in MSE between PCR and PLSR drops to 0. PLSR performs better with less principal components used - PLSR gives way smaller MSE for one principal components used than PCR. This is not surprising given the workings of PLSR. For the most extreme cases - case where one variable is the most important for the target variable and where there is not leading variable explaining the target variable - PLSR again outperforms PCR. Mean MSE for cases 1 and 5 over simulations with different number of components used for PLSR are 40 and 73 respectively. For PCR the results are 107 mean MSE over simulations in case 1 and 73 mean MSE for case 5.  
+
+<!-- ![Simulation 8](images/simulation_1/simulation8.pdf){width=100%}  -->
+```{r eval = TRUE, echo = TRUE, message = FALSE, warning=FALSE}
+library("pls") # PCA and PLS regression
+library("corrplot") # create correlation plots
+library("readxl") # read Excel files
+library("MASS")
+library("xts") #time series conversion
+library("zoo") # time series
+```
+
+```{r, eval = FALSE, echo = FALSE, message = FALSE, warning=FALSE}
+source("functions/constants.R")
+source("functions/data_utils.R")
+source("functions/helpers.R")
+source("functions/generate_data.R")
+source("functions/run_simulation.R")
+
+# Simulation 1: N = 100, p = 20, runs = 100, use optimal component number ----
+simulation_option_default <- list(N = possible_N[1],
+                                  p = 20,
+                                  runs = 100)
+dgp_option_default <- list(BETAS_INCREASE_FACTOR = 4)
+
+simulation1 <- new.env()
+
+
+simulation1$result <-
+  simulation(dgp_option_list = dgp_option_default,
+             simulation_option_list = simulation_option_default)
+# Compute mean statistics from simulation
+simulation1$MSE_stats <-
+  save_mean_mse_and_return_stats(simulation1$result)
+
+save(simulation1, file = "simulation1.RData")
+
+pdf(file = "images/simulation_1/simulation1.pdf")
+par(mfrow = c(3, 2))
+plot_MSE_comparison_boxplot(simulation1$result, simulation1$MSE_stats)
+dev.off()
+
+# Simulation 2: N = 200, p = 20, use optimal number of components ----
+simulation2 <- new.env()
+
+simulation2$sim_option <- simulation_option_default
+simulation2$sim_option$N <- possible_N[2]
+
+simulation2$result <-
+  simulation(dgp_option_list = dgp_option_default,
+             simulation_option_list = simulation2$sim_option)
+
+simulation2$MSE_stats <-
+  save_mean_mse_and_return_stats(simulation2$result)
+
+save(simulation2, file = "simulation2.RData")
+
+simulation2$result_cleared <- simulation2$result
+# Remove outlier
+simulation2$result_cleared$MSE_PLSR <- simulation2$result_cleared$MSE_PLSR[-79, ]
+simulation2$result_cleared$MSE_PCR <- simulation2$result_cleared$MSE_PCR[-79, ]
+
+pdf(file = "images/simulation_1/simulation2.pdf")
+par(mfrow = c(3, 2))
+plot_MSE_comparison_boxplot(simulation2$result_cleared, simulation2$MSE_stats)
+dev.off()
+
+# Simulation 3: N = 400, p = 20, use optimal number of components ----
+simulation3 <- new.env()
+
+simulation3$sim_option <- simulation_option_default
+simulation3$sim_option$N <- possible_N[3] # 400
+
+simulation3$result <-
+  simulation(dgp_option_list = dgp_option_default,
+             simulation_option_list = simulation3$sim_option)
+
+simulation3$MSE_stats <-
+  save_mean_mse_and_return_stats(simulation3$result)
+
+save(simulation3, file = "simulation3.RData")
+
+pdf(file = "images/simulation_1/simulation3.pdf")
+par(mfrow = c(3, 2))
+plot_MSE_comparison_boxplot(simulation3$result, simulation3$MSE_stats)
+dev.off()
+
+# Simulation 4: N = 200, p = 100, use optimal number of components ----
+simulation4 <- new.env()
+
+simulation4$sim_option <- simulation_option_default
+simulation4$sim_option$N <- possible_N[2] # 200
+simulation4$sim_option$p <- 100
+
+simulation4$result <-
+  simulation(dgp_option_list = dgp_option_default,
+             simulation_option_list = simulation4$sim_option)
+
+simulation4$MSE_stats <-
+  save_mean_mse_and_return_stats(simulation4$result)
+
+save(simulation4, file = "simulation4.RData")
+
+pdf(file = "images/simulation_1/simulation4.pdf")
+par(mfrow = c(3, 2))
+plot_MSE_comparison_boxplot(simulation4$result, simulation4$MSE_stats)
+dev.off()
+
+# Simulation 5: N = 200, p = 100, ncomp = 6 ----
+simulation5 <- new.env()
+
+simulation5$sim_option <- simulation_option_default
+simulation5$sim_option$N <- possible_N[2] # 200
+simulation5$sim_option$p <- 100
+simulation5$sim_option$ncomp <- 6
+
+simulation5$result <-
+  simulation(dgp_option_list = dgp_option_default,
+             simulation_option_list = simulation5$sim_option)
+
+simulation5$MSE_stats <-
+  save_mean_mse_and_return_stats(simulation5$result)
+
+save(simulation5, file = "simulation5.RData")
+
+pdf(file = "images/simulation_1/simulation5.pdf")
+par(mfrow = c(3, 2))
+plot_MSE_comparison_boxplot(simulation5$result , simulation5$MSE_stats)
+dev.off()
+
+# Simulation 6: N = 200, p = 100, ncomp = 3 ----
+simulation6 <- new.env()
+
+simulation6$sim_option <- simulation_option_default 
+simulation6$sim_option$N <- 200
+simulation6$sim_option$p <- 100
+simulation6$sim_option$ncomp <- 3
+
+simulation6$result <- simulation(dgp_option_list = dgp_option_default, simulation_option_list = simulation6$sim_option)
+
+simulation6$MSE_stats <- save_mean_mse_and_return_stats(simulation6$result)
+
+save(simulation6, file = "simulation6.RData")
+
+pdf(file = "images/simulation_1/simulation6.pdf")
+par(mfrow = c(3, 2))
+plot_MSE_comparison_boxplot(simulation6$result , simulation6$MSE_stats)
+dev.off()
+
+# Simulation 7: N = 200, p = 100, ncomp = 1 ----
+simulation7 <- new.env()
+
+simulation7$sim_option <- simulation_option_default 
+simulation7$sim_option$N <- possible_N[2]
+simulation7$sim_option$p <- 100
+simulation7$sim_option$ncomp <- 1
+
+simulation7$result <- simulation(dgp_option_list = dgp_option_default, simulation_option_list = simulation7$sim_option)
+
+simulation7$MSE_stats <- save_mean_mse_and_return_stats(simulation7$result)
+
+save(simulation7, file = "simulation7.RData")
+
+pdf(file = "images/simulation_1/simulation7.pdf")
+par(mfrow = c(3, 2))
+plot_MSE_comparison_boxplot(simulation7$result , simulation7$MSE_stats)
+dev.off()
+
+# Simulation 8: N = 192, p = 108, ncomp = 6, runs = 1000 ----
+simulation8 <- new.env()
+
+simulation8$sim_option <- simulation_option_default 
+simulation8$sim_option$N <- 192
+simulation8$sim_option$p <- 108
+simulation8$sim_option$runs <- 1000
+simulation8$sim_option$ncomp <- 6
+
+simulation8$result <- simulation(dgp_option_list = dgp_option_default, simulation_option_list = simulation8$sim_option)
+
+simulation8$MSE_stats <- save_mean_mse_and_return_stats(simulation8$result)
+
+pdf(file = "images/simulation_1/simulation8.pdf")
+par(mfrow = c(3, 2))
+plot_MSE_comparison_boxplot(simulation8$result , simulation8$MSE_stats)
+dev.off()
+# Simulation 9: N = 192, p = 108, ncomp = 6, runs = 100 ----
+simulation9 <- new.env()
+
+simulation9$sim_option <- simulation_option_default 
+simulation9$sim_option$N <- 192
+simulation9$sim_option$p <- 108
+
+simulation9$sim_option$ncomp <- 6
+
+simulation9$result <- simulation(dgp_option_list = dgp_option_default, simulation_option_list = simulation9$sim_option)
+
+simulation9$MSE_stats <- save_mean_mse_and_return_stats(simulation9$result)
+
+pdf(file = "images/simulation_1/simulation9.pdf")
+par(mfrow = c(3, 2))
+plot_MSE_comparison_boxplot(simulation9$result , simulation9$MSE_stats)
+dev.off()
+# Simulation 10: N = 192, p = 108, ncomp = 3, runs = 100 ----
+simulation10 <- new.env()
+
+simulation10$sim_option <- simulation_option_default 
+simulation10$sim_option$N <- 192
+simulation10$sim_option$p <- 108
+
+simulation10$sim_option$ncomp <- 3
+
+simulation10$result <- simulation(dgp_option_list = dgp_option_default, simulation_option_list = simulation10$sim_option)
+
+simulation10$MSE_stats <- save_mean_mse_and_return_stats(simulation10$result)
+
+pdf(file = "images/simulation_1/simulation10.pdf")
+par(mfrow = c(3, 2))
+plot_MSE_comparison_boxplot(simulation10$result , simulation10$MSE_stats)
+dev.off()
+
+# Simulation 11: N = 192, p = 108, ncomp = 1, runs = 100 ----
+simulation11 <- new.env()
+
+simulation11$sim_option <- simulation_option_default 
+simulation11$sim_option$N <- 192
+simulation11$sim_option$p <- 108
+
+simulation11$sim_option$ncomp <- 1
+
+simulation11$result <- simulation(dgp_option_list = dgp_option_default, simulation_option_list = simulation11$sim_option)
+
+simulation11$MSE_stats <- save_mean_mse_and_return_stats(simulation11$result)
+
+pdf(file = "images/simulation_1/simulation11.pdf")
+par(mfrow = c(3, 2))
+plot_MSE_comparison_boxplot(simulation11$result , simulation11$MSE_stats)
+dev.off()
+
+
+# TEST ----
+test <- new.env()
+test$sim_option <- simulation_option_default
+test$sim_option$runs <- 1
+test$sim_option$N <- 20
+test$sim_option$p <- 15
+test$result <- simulation(dgp_option_list = dgp_option_default, simulation_option_list = test$sim_option)
+```
+ 
+
+
+# Empirical Applicaiton
+```{r, results='hide', echo=FALSE, eval = FALSE, message=FALSE}
+# Load Data set
+load(file = "../data/data/WORKING_DATA.rda")
+
+# CONSTANTS ----
+
+# Variables to forecast:
+# CPI inflation
+# (aggregate) industrial production, 
+# (aggregate) unemployment rate
+# (effective) federal funds rate
+predictor_variables <- c("CPIAUCSL", "IPS10", "LHUR", "FYFF")
+
+# END CONSTANTS ----
+
+# Get data set end date(Note: this could be a constant, but again if you change the file now including later years this code will work automatically)
+data_end_date <- tail(zoo::as.Date(WORKING_DATA$rawdata), n = 1)
+transformed_ts <- get_transformed_time_series(WORKING_DATA, enddate = data_end_date)
+
+ts_cor <- cor(WORKING_DATA$rawdata)
+# Try do to PCA on the whole dataset, all components
+set.seed(2)
+# prediction_var <- transformed_ts[, predictor_variables]
+# transformed_ts <- remove_columns(transformed_ts, predictor_variables)
+# result <- pcr(prediction_var ~ ., data = transformed_ts, scale = TRUE, validaiton = CV)
+# summary(result)
+# validationplot(result, val.type = "MSEP")
+
+IPS10_pca <- pcr(IPS10 ~ ., data = transformed_ts, scale = TRUE, validation = "CV", ncomp = 5)
+
+# summary(IPS10_pca)
+# plot(
+#   IPS10_pca$scores[, 4], 
+#   transformed_ts[, "IPS10"][1:190],
+#   xlab = "PC comp 4 scores",
+#   ylab = "IPS10")
+# plot(
+#   IPS10_pca$scores[, 2], 
+#   transformed_ts[, "IPS10"][1:190],
+#   xlab = "PC comp 2 scores",
+#   ylab = "IPS10")
+# biplot(IPS10_pca, which = "loadings")
+# # Shows cross-validated error
+# plot(RMSEP(IPS10_pca), legendpos = "topright")
+# # Shows cross-validated predictions vs measured
+# plot(IPS10_pca, ncomp = 2, asp = 1, line = TRUE)
+# 
+# plot(IPS10_pca, "loadings", comps = 1:3, legendpos = "topleft", xlab = "nm")
+# abline(h = 0)
+
+```
