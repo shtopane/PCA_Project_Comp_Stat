@@ -584,6 +584,11 @@ for(i in 1:(nrow(application$first_sample) / 4)) {
     
     plsr$LHUR_model$first_sample$predicted <-
       predict(plsr$LHUR_model, application$LHUR_model$x, ncomp = g)
+    
+    print(i)
+    print(g)
+    print(plsr$LHUR_model$first_sample$MSE)
+    
     plsr$LHUR_model$first_sample$MSE[i, as.character(g)] <-
       get_MSE(plsr$LHUR_model$first_sample$predicted, application$LHUR_model$y)
   }
@@ -609,10 +614,10 @@ for(k in names(plsr)){
   }
 }
 
-application$FS$percentage_change_PCR_PLSR <- list()
+application$FS_test$percentage_change_PCR_PLSR <- list()
 
 for(l in names(pcr)) {
-  application$FS$percentage_change_PCR_PLSR[[l]] <-
+  application$FS_test$percentage_change_PCR_PLSR[[l]] <-
     mapply(
       get_percantage_change_MSE,
       pcr[[l]]$first_sample$MSE_mean,
@@ -620,6 +625,203 @@ for(l in names(pcr)) {
     )
 }
 
+# sample_name: first_sample, second_sample, third_sample. Should be ready before invoking this function
+# sample: the actual sample, ts object
+predict_by_sample <- function(sample_name, sample, sample_start_date, sample_name_short){
+  runs <-
+    (nrow(application[[sample_name]]) / 4)
+  
+  # This will create MSE matrix with column names components used in prediction, so we'll store MSE for 2 components used, 4 and 6
+  pcr$CPIAUCSL_model[[sample_name]]$MSE <-
+    matrix(
+      nrow = runs,
+      ncol = application$number_of_components,
+      dimnames = list(NULL, application$PCR_ncomp)
+    )
+  pcr$FYFF_model[[sample_name]]$MSE <-
+    matrix(
+      nrow = runs,
+      ncol = application$number_of_components,
+      dimnames = list(NULL, application$PCR_ncomp)
+    )
+  pcr$IPS10_model[[sample_name]]$MSE <-
+    matrix(
+      nrow = runs,
+      ncol = application$number_of_components,
+      dimnames = list(NULL, application$PCR_ncomp)
+    )
+  pcr$LHUR_model[[sample_name]]$MSE <-
+    matrix(
+      nrow = runs,
+      ncol = application$number_of_components,
+      dimnames = list(NULL, application$PCR_ncomp)
+    )
+  
+  # # This will create MSE matrix with column names components used in prediction, so we'll store MSE for 1 components used, 2 and 3(in this case the same as normal index, but it's implemented in the same way for consistency)
+  plsr$CPIAUCSL_model[[sample_name]]$MSE <-
+    matrix(
+      nrow = runs,
+      ncol = application$number_of_components,
+      dimnames = list(NULL, application$PLSR_ncomp)
+    )
+  plsr$FYFF_model[[sample_name]]$MSE <-
+    matrix(
+      nrow = runs,
+      ncol = application$number_of_components,
+      dimnames = list(NULL, application$PLSR_ncomp)
+    )
+  plsr$IPS10_model[[sample_name]]$MSE <-
+    matrix(
+      nrow = runs,
+      ncol = application$number_of_components,
+      dimnames = list(NULL, application$PLSR_ncomp)
+    )
+  plsr$LHUR_model[[sample_name]]$MSE <-
+    matrix(
+      nrow = runs,
+      ncol = application$number_of_components,
+      dimnames = list(NULL, application$PLSR_ncomp)
+    )
+  
+  
+  for (i in 1:runs) {
+    prediction_sample <-
+      window(application[[sample_name]],
+             end = sample_start_date[1] + i)
+    
+    application$CPIAUCSL_model$x <-
+      model.matrix(CPIAUCSL ~ ., data = prediction_sample)[, -1]
+    application$CPIAUCSL_model$y <-
+      prediction_sample[, "CPIAUCSL"]
+    
+    application$FYFF_model$x <-
+      model.matrix(FYFF ~ ., data = prediction_sample)[, -1]
+    application$FYFF_model$y <-
+      prediction_sample[, "FYFF"]
+    
+    application$IPS10_model$x <-
+      model.matrix(IPS10 ~ ., data = prediction_sample)[, -1]
+    application$IPS10_model$y <-
+      prediction_sample[, "IPS10"]
+    
+    application$LHUR_model$x <-
+      model.matrix(LHUR ~ ., data = prediction_sample)[, -1]
+    application$LHUR_model$y <-
+      prediction_sample[, "LHUR"]
+    
+    for (j in PCR_ncomp) {
+      pcr$CPIAUCSL_model[[sample_name]]$predicted <-
+        predict(pcr$CPIAUCSL_model, application$CPIAUCSL_model$x, ncomp = j)
+      
+      pcr$CPIAUCSL_model[[sample_name]]$MSE[i, as.character(j)] <-
+        get_MSE(pcr$CPIAUCSL_model[[sample_name]]$predicted,
+                application$CPIAUCSL_model$y)
+      
+      pcr$FYFF_model[[sample_name]]$predicted <-
+        predict(pcr$FYFF_model, application$FYFF_model$x, ncomp = j)
+      
+      pcr$FYFF_model[[sample_name]]$MSE[i, as.character(j)] <-
+        get_MSE(pcr$FYFF_model[[sample_name]]$predicted,
+                application$FYFF_model$y)
+      
+      pcr$IPS10_model[[sample_name]]$predicted <-
+        predict(pcr$IPS10_model, application$IPS10_model$x, ncomp = j)
+      
+      pcr$IPS10_model[[sample_name]]$MSE[i, as.character(j)] <-
+        get_MSE(pcr$IPS10_model[[sample_name]]$predicted,
+                application$IPS10_model$y)
+      
+      pcr$LHUR_model[[sample_name]]$predicted <-
+        predict(pcr$LHUR_model, application$LHUR_model$x, ncomp = j)
+      
+      pcr$LHUR_model[[sample_name]]$MSE[i, as.character(j)] <-
+        get_MSE(pcr$LHUR_model[[sample_name]]$predicted,
+                application$LHUR_model$y)
+      
+    }
+    
+    for (g in PLSR_ncomp) {
+      plsr$CPIAUCSL_model[[sample_name]]$predicted <-
+        predict(plsr$CPIAUCSL_model,
+                application$CPIAUCSL_model$x,
+                ncomp = g)
+      
+      plsr$CPIAUCSL_model[[sample_name]]$MSE[i, as.character(g)] <-
+        get_MSE(plsr$CPIAUCSL_model[[sample_name]]$predicted,
+                application$CPIAUCSL_model$y)
+      
+      plsr$FYFF_model[[sample_name]]$predicted <-
+        predict(plsr$FYFF_model, application$FYFF_model$x, ncomp = g)
+      
+      plsr$FYFF_model[[sample_name]]$MSE[i, as.character(g)] <-
+        get_MSE(plsr$FYFF_model[[sample_name]]$predicted,
+                application$FYFF_model$y)
+      
+      plsr$IPS10_model[[sample_name]]$predicted <-
+        predict(plsr$IPS10_model, application$IPS10_model$x, ncomp = g)
+      
+      plsr$IPS10_model[[sample_name]]$MSE[i, as.character(g)] <-
+        get_MSE(plsr$IPS10_model[[sample_name]]$predicted,
+                application$IPS10_model$y)
+      
+      plsr$LHUR_model[[sample_name]]$predicted <-
+        predict(plsr$LHUR_model, application$LHUR_model$x, ncomp = g)
+      plsr$LHUR_model[[sample_name]]$MSE[i, as.character(g)] <-
+        get_MSE(plsr$LHUR_model[[sample_name]]$predicted,
+                application$LHUR_model$y)
+    }
+  }
+  
+  for (h in names(pcr)) {
+    pcr[[h]][[sample_name]]$MSE_mean <- rep(0, length(PCR_ncomp))
+    names(pcr[[h]][[sample_name]]$MSE_mean) <- PCR_ncomp
+    
+    for (hhh in PCR_ncomp) {
+      pcr[[h]][[sample_name]]$MSE_mean[as.character(hhh)] <-
+        mean(pcr[[h]][[sample_name]]$MSE[, as.character(hhh)])
+    }
+  }
+  
+  
+  for (k in names(plsr)) {
+    plsr[[k]][[sample_name]]$MSE_mean <- rep(0, length(PLSR_ncomp))
+    names(plsr[[k]][[sample_name]]$MSE_mean) <- PLSR_ncomp
+    
+    for (hh in PLSR_ncomp) {
+      plsr[[k]][[sample_name]]$MSE_mean[as.character(hh)] <-
+        mean(plsr[[k]][[sample_name]]$MSE[, as.character(hh)])
+    }
+  }
+  
+  application[[sample_name_short]]$percentage_change_PCR_PLSR <- list()
+  
+  for (l in names(pcr)) {
+    application[[sample_name_short]]$percentage_change_PCR_PLSR[[l]] <-
+      mapply(
+        get_percantage_change_MSE,
+        pcr[[l]][[sample_name]]$MSE_mean,
+        plsr[[l]][[sample_name]]$MSE_mean
+      )
+  }
+}
 
+# Prediction based on first sample
+predict_by_sample(sample_name = "first_sample", sample = application$first_sample, sample_start_date = application$first_sample_period$startdate, sample_name_short = "FS")
+
+# Prediction based on second sample
+predict_by_sample(
+  sample_name = "second_sample",
+  sample = application$second_sample,
+  sample_start_date = application$second_sample_period$startdate,
+  sample_name_short = "SS"
+)
+
+# Prediction based on third sample
+predict_by_sample(
+  sample_name = "third_sample",
+  sample = application$third_sample,
+  sample_start_date = application$third_sample_period$startdate,
+  sample_name_short = "TS"
+)
 
 ```
