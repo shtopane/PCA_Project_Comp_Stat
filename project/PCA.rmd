@@ -177,9 +177,7 @@ colnames(plotting$pcr_plsr_mean_mat) <- plotting$barplot_colnames
          c("PCR", "PLSR"),
          fill = plotting$barplot_colors)
 }
-```
-
-
+```  
 
 ### Results with setting the number of principal components used for prediction
 In next simulations, $N$ is set to $200, 192$, $p$ to $100, 108$ and the number of principal components used for prediction is varying $r = 1, 3, 6$. One simulation runs for 1000 times, all others for 100. $N = 192$ and $p = 108$ are chosen out of our real data set where we have 192 observations and 108 variables. When using smaller number of components again PLSR outperforms PCR in almost all cases. The only case where PCR performs better is in the case where all variables are correlated - this case is most likely to lead to overfitting compared to other cases, but even in this case when we increase the number of principal components used to six, the difference in MSE between PCR and PLSR drops to 0. PLSR performs better with less principal components used - PLSR gives way smaller MSE for one principal components used than PCR. This is not surprising given the workings of PLSR. For the most extreme cases - case where one variable is the most important for the target variable and where there is not leading variable explaining the target variable - PLSR again outperforms PCR. Mean MSE for cases 1 and 5 over simulations with different number of components used for PLSR are 40 and 73 respectively. For PCR the results are 107 mean MSE over simulations in case 1 and 73 mean MSE for case 5.  
@@ -208,8 +206,6 @@ colnames(plotting$pcr_plsr_mean_mat) <- plotting$barplot_colnames
 ```
 
 ```{r, eval = FALSE, echo = FALSE, message = FALSE, warning=FALSE}
-
-
 # Simulation 1: N = 100, p = 20, runs = 100, use optimal component number ----
 run_simulation1(simulation_option_default, dgp_option_default)
 
@@ -535,57 +531,8 @@ predict_by_sample(
   sample_start_date = application$third_sample_period$startdate,
   sample_name_short = "TS"
 )
+```  
 
-# # PLOTTING ----
-# application$results$PCR$LHUR_first_sample <-
-#   ts(
-#     pcr$LHUR$first_sample$predicted,
-#     start = application$first_sample_period$startdate,
-#     frequency = 4
-#   )
-# 
-# application$results$PLSR$LHUR_first_sample <-
-#   ts(
-#     plsr$LHUR$first_sample$predicted,
-#     start = application$first_sample_period$startdate,
-#     frequency = 4
-#   )
-# 
-# application$results$LHUR_first_sample_time <-
-#   as.yearqtr(time(application$results$PCR$LHUR_first_sample))
-# 
-# {
-#   plot(
-#     x = application$results$LHUR_first_sample_time,
-#     y = application$results$PCR$LHUR_first_sample,
-#     type = "l",
-#     col = "goldenrod1",
-#     main = "First sample PCR results for unemployment rate",
-#     xlab = "Time",
-#     ylab = "LHUR",
-#   )
-#   lines(
-#     x = application$results$LHUR_first_sample_time,
-#     y = application$results$PLSR$LHUR_first_sample,
-#     col = "goldenrod4"
-#   )
-#   lines(
-#     x = application$results$LHUR_first_sample_time,
-#     y = application$first_sample[, "LHUR"],
-#     lwd=2.0,
-#     col = "dodgerblue3"
-#   )
-#   # Add a legend
-#   legend(
-#     "topleft",
-#     legend = c("PCR", "PLSR" , "Actual"),
-#     col = c("goldenrod1", "goldenrod4", "dodgerblue3"),
-#     lty = 1:1:1,
-#     cex = 0.8
-#   )
-# }
-
-```
 ## Application results
 I report the results using difference in MSE between PCR and PLSR in percent. Positive values indicate PLSR performed better than PCR and negative values report cases where PCR MSE was lower than PLSR MSE.  
 We can see the forecast performance of the methods in the three samples and for different number of components used. Cases are grouped by number of components used for each method - for PCR number of components are 2,4,6 and for PLSR number of components used are 1,2,3. Number of components used in the forecast in denoted by $r = n1, n2$ in the table output.
