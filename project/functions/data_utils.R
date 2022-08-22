@@ -7,12 +7,6 @@ introduce_correlations <- function(data, transformation_length, max_el = NULL){
     to = sd(data),
     len = transformation_length)
   
-  # result <- exp(log(0.8) * seq(
-  #   from = max_el,
-  #   to = sd(data), 
-  #   len = transformation_length))
-  
-  
   return(result)
 }
 
