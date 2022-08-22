@@ -11,7 +11,7 @@ run_simulation8 <- function(simulation_option_default, dgp_option_default){
   
   MSE_stats <- save_mean_mse_and_return_stats(result)
   
-  pdf(file = "images/simulations/simulation8.pdf")
+  pdf(file = "images/simulation_results/simulation8.pdf")
   par(mfrow = c(3, 2))
   plot_MSE_comparison_boxplot(result , MSE_stats)
   dev.off()

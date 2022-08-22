@@ -182,7 +182,7 @@ simulation1$MSE_stats <-
 
 save(simulation1, file = "simulation_results_Rdata/simulation1.RData")
 
-pdf(file = "images/simulation_1/simulation1.pdf")
+pdf(file = "images/simulation_results/simulation1.pdf")
 par(mfrow = c(3, 2))
 plot_MSE_comparison_boxplot(simulation1$result, simulation1$MSE_stats)
 dev.off()
@@ -207,7 +207,7 @@ simulation2$result_cleared <- simulation2$result
 simulation2$result_cleared$MSE_PLSR <- simulation2$result_cleared$MSE_PLSR[-79, ]
 simulation2$result_cleared$MSE_PCR <- simulation2$result_cleared$MSE_PCR[-79, ]
 
-pdf(file = "images/simulation_1/simulation2.pdf")
+pdf(file = "images/simulation_results/simulation2.pdf")
 par(mfrow = c(3, 2))
 plot_MSE_comparison_boxplot(simulation2$result_cleared, simulation2$MSE_stats)
 dev.off()
@@ -227,7 +227,7 @@ simulation3$MSE_stats <-
 
 save(simulation3, file = "simulation_results_Rdata/simulation3.RData")
 
-pdf(file = "images/simulation_1/simulation3.pdf")
+pdf(file = "images/simulation_results/simulation3.pdf")
 par(mfrow = c(3, 2))
 plot_MSE_comparison_boxplot(simulation3$result, simulation3$MSE_stats)
 dev.off()
@@ -248,7 +248,7 @@ simulation4$MSE_stats <-
 
 save(simulation4, file = "simulation_results_Rdata/simulation4.RData")
 
-pdf(file = "images/simulation_1/simulation4.pdf")
+pdf(file = "images/simulation_results/simulation4.pdf")
 par(mfrow = c(3, 2))
 plot_MSE_comparison_boxplot(simulation4$result, simulation4$MSE_stats)
 dev.off()
@@ -270,7 +270,7 @@ simulation5$MSE_stats <-
 
 save(simulation5, file = "simulation_results_Rdata/simulation5.RData")
 
-pdf(file = "images/simulation_1/simulation5.pdf")
+pdf(file = "images/simulation_results/simulation5.pdf")
 par(mfrow = c(3, 2))
 plot_MSE_comparison_boxplot(simulation5$result , simulation5$MSE_stats)
 dev.off()
@@ -289,7 +289,7 @@ simulation6$MSE_stats <- save_mean_mse_and_return_stats(simulation6$result)
 
 save(simulation6, file = "simulation_results_Rdata/simulation6.RData")
 
-pdf(file = "images/simulation_1/simulation6.pdf")
+pdf(file = "images/simulation_results/simulation6.pdf")
 par(mfrow = c(3, 2))
 plot_MSE_comparison_boxplot(simulation6$result , simulation6$MSE_stats)
 dev.off()
@@ -308,7 +308,7 @@ simulation7$MSE_stats <- save_mean_mse_and_return_stats(simulation7$result)
 
 save(simulation7, file = "simulation_results_Rdata/simulation7.RData")
 
-pdf(file = "images/simulation_1/simulation7.pdf")
+pdf(file = "images/simulation_results/simulation7.pdf")
 par(mfrow = c(3, 2))
 plot_MSE_comparison_boxplot(simulation7$result , simulation7$MSE_stats)
 dev.off()
@@ -332,7 +332,7 @@ simulation9$MSE_stats <- save_mean_mse_and_return_stats(simulation9$result)
 
 save(simulation9, file = "simulation_results_Rdata/simulation9.RData")
 
-pdf(file = "images/simulation_1/simulation9.pdf")
+pdf(file = "images/simulation_results/simulation9.pdf")
 par(mfrow = c(3, 2))
 plot_MSE_comparison_boxplot(simulation9$result , simulation9$MSE_stats)
 dev.off()
@@ -351,7 +351,7 @@ simulation10$MSE_stats <- save_mean_mse_and_return_stats(simulation10$result)
 
 save(simulation10, file = "simulation_results_Rdata/simulation10.RData")
 
-pdf(file = "images/simulation_1/simulation10.pdf")
+pdf(file = "images/simulation_results/simulation10.pdf")
 par(mfrow = c(3, 2))
 plot_MSE_comparison_boxplot(simulation10$result , simulation10$MSE_stats)
 dev.off()
@@ -371,7 +371,7 @@ simulation11$MSE_stats <- save_mean_mse_and_return_stats(simulation11$result)
 
 save(simulation11, file = "simulation_results_Rdata/simulation11.RData")
 
-pdf(file = "images/simulation_1/simulation11.pdf")
+pdf(file = "images/simulation_results/simulation11.pdf")
 par(mfrow = c(2, 3))
 plot_MSE_comparison_boxplot(simulation11$result , simulation11$MSE_stats)
 dev.off()
