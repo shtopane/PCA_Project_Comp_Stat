@@ -210,11 +210,16 @@ colnames(plotting$pcr_plsr_mean_mat) <- plotting$barplot_colnames
 ```
 
 ```{r, eval = FALSE, echo = FALSE, message = FALSE, warning=FALSE}
-# Simulation 1: N = 100, p = 20, runs = 100, use optimal component number ----
-run_simulation1(simulation_option_default, dgp_option_default)
-
-# Simulation 2: N = 200, p = 20, use optimal number of components ----
-run_simulation2(simulation_option_default, dgp_option_default)
+# Load all simulations RData files. Comment out for testing simulations
+load("simulation_results_Rdata/simulation3.RData")
+load("simulation_results_Rdata/simulation4.RData")
+load("simulation_results_Rdata/simulation5.RData")
+load("simulation_results_Rdata/simulation6.RData")
+load("simulation_results_Rdata/simulation7.RData")
+load("simulation_results_Rdata/simulation8.RData")
+load("simulation_results_Rdata/simulation9.RData")
+load("simulation_results_Rdata/simulation10.RData")
+load("simulation_results_Rdata/simulation11.RData")
 
 # Simulation 3: N = 400, p = 20, use optimal number of components ----
 run_simulation3(simulation_option_default, dgp_option_default)
