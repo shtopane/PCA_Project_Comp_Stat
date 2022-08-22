@@ -1,12 +1,13 @@
-introduce_correlations <- function(data, transformation_length, max_el = NULL){
+make_data_correlated <- function(data, transformation_length, max_el = NULL){
   len <- length(data)
   max_el <- if(is.null(max_el)) max(data) else max_el
   
+  # sample data at random spot and multiply by a sequence going from the max element of the data to its sd
   result <- data[sample(len, 1)] * seq(
     from = max_el,
     to = sd(data),
     len = transformation_length)
-  
+
   return(result)
 }
 
