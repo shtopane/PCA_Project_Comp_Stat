@@ -11,19 +11,21 @@ fontsize: 12pt
 geometry: "margin=1in"
 urlcolor: blue
 bibliography: "./references.bib"
-notice: "@*"
+nocite: "@*"
 ---
 
 ```{r setup, include=FALSE} 
 knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
 ```
-
+<!-- [\textcolor{blue}{J. Groen, G. Kapetanios (2008)}](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1136165) -->
+<!-- [\textcolor{blue}{Stock and Watson (2009)}](https://scholar.harvard.edu/stock/publications/forecasting-dynamic-factor-models-subject-structural-instability) -->
 # Introduction
 Economic phenomena, both micro and macro, has always been influenced by a large number of variables. Difficulties in data collection and lack of computational power in the past imposed usage of small structural models for forecasting. Nowadays we can employ several techniques and methods to forecast economic variables using high-dimensional data. Principal component analysis(PCA) is a wildly common method for dimension reduction. The basic idea is to transform the original data in such way as to use smaller number of factors in our prediction instead of the original number of variables. Partial Least Squares(PLS) constructs the factors such that the covariance between the factors and the target variable is maximized. My goal with this project is to explore the kinds of data structure where PCA performs poorly. In the literature one of the cases studied is high-dimensional data where one variable is highly important for the target variable and the other variables are not. The many noisy variables tend to  mask the signal in the leading variable when constructing the factors, leading to worse prediction.
-The project is organized into Theoretical background section and simulation and empirical application sections. For the lather sections I take guidance from [\textcolor{blue}{J. Groen, G. Kapetanios (2008)}](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1136165) and use data set from [\textcolor{blue}{Stock and Watson (2009)}](https://scholar.harvard.edu/stock/publications/forecasting-dynamic-factor-models-subject-structural-instability).
+The project is organized into Theoretical background section and simulation and empirical application sections. For the lather sections I take guidance from [@groen2009revisiting] and use data set from [@stock2009forecasting].
+
 
 # Theorethical background of PCA and PLS
-The first workings in PCA are from Pearson (1901) and later Hotelling (1933). Decades after its creation, the developments in the method were focused on theory. The first applications to real data were done in the 60s with data sets containing 11-15 variables. Nowadays, PCA is used in variety of academic disciplines, industrial organizations and government agencies.
+As [@jolliffe202250] writes, the first workings in PCA are from Pearson and later Hotelling in the first years of the 20th century. Decades after its creation, the developments in the method were focused on theory. The first applications to real data were done in the 60s with data sets containing 11-15 variables. Nowadays, PCA is used in variety of academic disciplines, industrial organizations and government agencies.
 
 ## Principal component analysis
 Given an ${n}\times{p}$ matrix $X$ PCA creates orthogonal linear combinations of the columns of $X$ and finds the projections which maximize the variance. The first principal component contains projections along the direction with the most variance. We derive principal components by decomposing the matrix $X$ and deriving the eigen vectors. An $m \times n$ matrix $M$ can be written in the form
@@ -77,10 +79,10 @@ PLS is an alternative dimension reduction method that takes the response variabl
 In a high-dimensional setting where one or couple of variables explains the target variable well, we'll expect PLS to outperform PCR.
 
 # Simulation
-The simulation study is inspired by J. Groen, G. Kapetanios (2008). In the paper the authors compare PCR to PLS and Bayesian regression in data with different factor structures. I compare only PCR to PLS and leave Bayesian regression out. 
+The simulation study is inspired by [@groen2009revisiting]. In the paper the authors compare PCR to PLS and Bayesian regression in data with different factor structures. I compare only PCR to PLS and leave Bayesian regression out. 
 
 ## Setup
-One of the issues with principal components extracted from large number of variables is that there is no guarantee that the components will forecast the target variable well. Boivin an Ng (2006) show that if the forecasting accuracy is driven by a certain factor, this factor can be dominated by other non-informative factors in a large data set. I simulate high dimensional data with different correlation structure under five cases: 
+One of the issues with principal components extracted from large number of variables is that there is no guarantee that the components will forecast the target variable well. [@boivin2006more] show that if the forecasting accuracy is driven by a certain factor, this factor can be dominated by other non-informative factors in a large data set. I simulate high dimensional data with different correlation structure under five cases: 
 
 1. Data set where one variable is highly related with the outcome variable. 
 2. Data set where 1/3 of the variables are highly correlated. 
@@ -373,7 +375,7 @@ test$result <- simulation(dgp_option_list = dgp_option_default, simulation_optio
 
 # Empirical Applicaiton
 
-To test the performance of PCR and PLSR with realistic settings, I use J. Groen and G. Kapetanios (2008) and the data set from Stock and Watson (2009). 
+To test the performance of PCR and PLSR with realistic settings, I use [@groen2009revisiting] and the data set from [@stock2009forecasting].
 
 ## Data set and variables
 The data set consists of 108 macroeconomic variables in a panel going from January 1959 to December 2006. The variables used for prediction are *CPI inflation*,  *industrial production*, *unemployment rate* and the *federal funds rate*. The raw data is transformed using transformation information for every variable in order to create stationary series of data. 
@@ -772,4 +774,6 @@ knitr::kable(tables$TS, format = "simple", caption = "Third sample results", ali
 ```
 
 # Conclusion
-For most applications the difference between PCR and PLSR is not substantial - both methods seem to perform the same. An important distinction between the workings of the methods arises from the underlying data structure on which they are performed. PCR is most beneficial in data setting without unique variation - all variables seem to move together. When we introduce correlation in clusters or neighborhoods of the data cloud, PLSR performs slightly better as it is able to capture the relationship between the features and the target variable. In a data set with one dominant factor explaining the target variable, PCR tends to aggregate all variables and diminish the importance of this one factor, while PLSR is able to capture the relationship and place greater predictive power on that one predictor variable - MSE for PLSR will drop substantially on the first principal component and all other components will not improve the prediction by much. Overall, the choice between PCR and PLSR lies in the structure of the data set at hand.
+For most applications the difference between PCR and PLSR is not substantial - both methods seem to perform the same. An important distinction between the workings of the methods arises from the underlying data structure on which they are performed. PCR is most beneficial in data setting without unique variation - all variables seem to move together. When we introduce correlation in clusters or neighborhoods of the data cloud, PLSR performs slightly better as it is able to capture the relationship between the features and the target variable. In a data set with one dominant factor explaining the target variable, PCR tends to aggregate all variables and diminish the importance of this one factor, while PLSR is able to capture the relationship and place greater predictive power on that one predictor variable - MSE for PLSR will drop substantially on the first principal component and all other components will not improve the prediction by much. Overall, the choice between PCR and PLSR lies in the structure of the data set at hand.  
+
+# References
