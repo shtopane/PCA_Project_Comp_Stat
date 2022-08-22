@@ -17,8 +17,7 @@ nocite: "@*"
 ```{r setup, include=FALSE} 
 knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
 ```
-<!-- [\textcolor{blue}{J. Groen, G. Kapetanios (2008)}](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1136165) -->
-<!-- [\textcolor{blue}{Stock and Watson (2009)}](https://scholar.harvard.edu/stock/publications/forecasting-dynamic-factor-models-subject-structural-instability) -->
+
 # Introduction
 Economic phenomena, both micro and macro, has always been influenced by a large number of variables. Difficulties in data collection and lack of computational power in the past imposed usage of small structural models for forecasting. Nowadays we can employ several techniques and methods to forecast economic variables using high-dimensional data. Principal component analysis(PCA) is a wildly common method for dimension reduction. The basic idea is to transform the original data in such way as to use smaller number of factors in our prediction instead of the original number of variables. Partial Least Squares(PLS) constructs the factors such that the covariance between the factors and the target variable is maximized. My goal with this project is to explore the kinds of data structure where PCA performs poorly. In the literature one of the cases studied is high-dimensional data where one variable is highly important for the target variable and the other variables are not. The many noisy variables tend to  mask the signal in the leading variable when constructing the factors, leading to worse prediction.
 The project is organized into Theoretical background section and simulation and empirical application sections. For the lather sections I take guidance from [@groen2009revisiting] and use data set from [@stock2009forecasting].
