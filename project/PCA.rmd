@@ -42,12 +42,12 @@ library("knitr") # rendering engine
 
 ```{r eval = TRUE, echo = FALSE, message = FALSE, warning=FALSE}
 # Global variables
-simulation_option_default <- list(N = possible_N[1],
+simulation_option_default <- list(N = 100,
                                   p = 20,
                                   runs = 100,
                                   ncomp = NULL,
                                   should_return_data = FALSE)
-dgp_option_default <- list(BETAS_INCREASE_FACTOR = 4, error_term_constant = 4)
+dgp_option_default <- list(beta_factor = 4, error_term_constant = 4)
 variables_display_names <- c("CPI inflation", "Industrial index", "Unemployment rate", "Federal funds rate")
 variables_names <- c("CPIAUCSL", "IPS10", "LHUR", "FYFF")
 

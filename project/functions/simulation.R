@@ -5,7 +5,7 @@ library("propagate") # lib for creating big correlation or covariance matrices
 # @var dgp_option_list
 simulation <-
   function(dgp_option_list = list(error_term_constant = 4,
-                                  BETAS_INCREASE_FACTOR = 9),
+                                  beta_factor = 9),
            simulation_option_list = list(N = 200,
                                          p = 15,
                                          runs = 100,
@@ -82,8 +82,8 @@ simulation <-
             case = j,
             inflate_beta = inflate_beta,
             error_term_constant = dgp_option_list$error_term_constant,
-            BETAS_INCREASE_FACTOR = dgp_option_list$BETAS_INCREASE_FACTOR,
-            X_COVARIANCE_CLUSTER_PROPORTION = correlated_variables_with_response[j]
+            beta_factor = dgp_option_list$beta_factor,
+            X_covariance_cluster_proportion = correlated_variables_with_response[j]
           )
         # ----
         

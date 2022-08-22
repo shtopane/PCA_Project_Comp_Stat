@@ -13,8 +13,8 @@ dgp <- function(N,
                 case,
                 inflate_beta = FALSE,
                 error_term_constant = 4,
-                BETAS_INCREASE_FACTOR = 9,
-                X_COVARIANCE_CLUSTER_PROPORTION = 0.20) {
+                beta_factor = 9,
+                X_covariance_cluster_proportion = 0.20) {
   
   # Mu is random by design
   if (is.null(mu)) {
@@ -30,7 +30,7 @@ dgp <- function(N,
   
   # Where to create correlations in the data
   X_cluster_index <-
-    round(X_covariance_raw_length * X_COVARIANCE_CLUSTER_PROPORTION)
+    round(X_covariance_raw_length * X_covariance_cluster_proportion)
   
   X_covariance_raw_transformed <- X_covariance_raw
 
@@ -63,13 +63,13 @@ dgp <- function(N,
   betas <- rnorm(variable_count)
   
   betas_cluster_index <-
-    round(variable_count * X_COVARIANCE_CLUSTER_PROPORTION)
+    round(variable_count * X_covariance_cluster_proportion)
   
   betas_with_cluster <- betas
   
   if (inflate_beta == TRUE || betas_cluster_index != 0) {
     # Inflates beta max value.
-    betas_max_value <- max(betas) * BETAS_INCREASE_FACTOR
+    betas_max_value <- max(betas) * beta_factor
     
     # Select betas which will be tightly coupled with the response. In this sense we create a strong or weak factor
     # structure
