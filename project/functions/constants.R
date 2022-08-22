@@ -7,4 +7,4 @@ simulation_factor_loadings_description <- c(
 )
 number_of_factors_possible_values <- c(1, 3, 6)
 c_tilde_possible_values <- c(1,4,9)
-possible_N <- c(100, 200, 400)
+# possible_N <- c(100, 200, 400)

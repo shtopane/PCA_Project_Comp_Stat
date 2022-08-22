@@ -15,7 +15,7 @@ run_simulation2 <- function(simulation_option_default, dgp_option_default){
   simulation2 <- new.env()
   
   simulation2$sim_option <- simulation_option_default
-  simulation2$sim_option$N <- possible_N[2]
+  simulation2$sim_option$N <- 200
   
   simulation2$result <-
     simulation(dgp_option_list = dgp_option_default,
@@ -36,7 +36,7 @@ run_simulation3 <- function(simulation_option_default, dgp_option_default){
   simulation3 <- new.env()
   
   simulation3$sim_option <- simulation_option_default
-  simulation3$sim_option$N <- possible_N[3] # 400
+  simulation3$sim_option$N <- 400
   
   simulation3$result <-
     simulation(dgp_option_list = dgp_option_default,
@@ -52,7 +52,7 @@ run_simulation4 <- function(simulation_option_default, dgp_option_default){
   simulation4 <- new.env()
   
   simulation4$sim_option <- simulation_option_default
-  simulation4$sim_option$N <- possible_N[2] # 200
+  simulation4$sim_option$N <-  200
   simulation4$sim_option$p <- 100
   
   simulation4$result <-
@@ -69,7 +69,7 @@ run_simulation5 <- function(simulation_option_default, dgp_option_default){
   simulation5 <- new.env()
   
   simulation5$sim_option <- simulation_option_default
-  simulation5$sim_option$N <- possible_N[2] # 200
+  simulation5$sim_option$N <- 200
   simulation5$sim_option$p <- 100
   simulation5$sim_option$ncomp <- 6
   
@@ -102,7 +102,7 @@ run_simulation7 <- function(simulation_option_default, dgp_option_default){
   simulation7 <- new.env()
   
   simulation7$sim_option <- simulation_option_default 
-  simulation7$sim_option$N <- possible_N[2]
+  simulation7$sim_option$N <- 200
   simulation7$sim_option$p <- 100
   simulation7$sim_option$ncomp <- 1
   
@@ -162,7 +162,6 @@ run_simulation10 <- function(simulation_option_default, dgp_option_default){
   simulation10$MSE_stats <- save_mean_mse_and_return_stats(simulation10$result)
   
   save(simulation10, file = "simulation_results_Rdata/simulation10.RData")
-  .plot_simulation_result_save_image(simulation10$result, simulation10$MSE_stats, "simulation10")
 }
 
 run_simulation11 <- function(simulation_option_default, dgp_option_default){
