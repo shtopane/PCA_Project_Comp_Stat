@@ -47,6 +47,8 @@ simulation_option_default <- list(N = possible_N[1],
                                   runs = 100,
                                   ncomp = NULL)
 dgp_option_default <- list(BETAS_INCREASE_FACTOR = 4, error_term_constant = 4)
+variables_display_names <- c("CPI inflation", "Industrial index", "Unemployment rate", "Federal funds rate")
+variables_names <- c("CPIAUCSL", "IPS10", "LHUR", "FYFF")
 
 plotting <- new.env()
 plotting$barplot_rownames <- c("PCR", "PLSR")
@@ -257,35 +259,29 @@ The forecasts are performed over three samples from the data: from January 1972 
 # Load Data set
 load(file = "../data/data/WORKING_DATA.rda")
 application <- new.env()
-# Variables to forecast:
-# CPI inflation
-# (aggregate) industrial production, 
-# (aggregate) unemployment rate
-# (effective) federal funds rate
+
 # CONSTANTS ----
-application$variables_to_predict <- c("CPIAUCSL", "IPS10", "LHUR", "FYFF")
-application$h <- 12 # c(3, 12, 24)
+application$h <- 12
 application$PCR_ncomp <- c(2, 4, 6)
 application$PLSR_ncomp <- c(1, 2, 3)
-# Number of component cases: for now 3 cases for both methods.
+
 application$number_of_components <- length(application$PCR_ncomp)
+
+application$dates$train_enddate <- string_date_to_vector_date("1971-10-01")
+
 # END CONSTANTS ----
 
 # Get data set end date(Note: this could be a constant, but again if you change the file now including later years this code will work automatically)
 application$data_end_date <- tail(zoo::as.Date(WORKING_DATA$rawdata), n = 1)
 application$data_first_date <- head(zoo::as.Date(WORKING_DATA$rawdata), n = 1)
-application$train_end_date <- string_date_to_vector_date("1971-10-01") #zoo::as.Date("1971-10-01")
 
-application$train_data_ts <- get_transformed_time_series(WORKING_DATA, enddate = application$train_end_date)
+application$train_data_ts <- get_transformed_time_series(WORKING_DATA, enddate = application$dates$train_enddate)
 application$data_as_ts <- get_transformed_time_series(WORKING_DATA, enddate = application$data_end_date)
-
-# plot.ts(application$train_data_ts[, application$variables_to_predict])
 
 
 set.seed(2456)
-application$train_data_ts_cleared <- application$train_data_ts[-(is.na(application$train_data_ts) == TRUE), ]
 
-# Run models on train data. Then predictions will be made on 3 samples
+# Run models on train data. Then predictions will be made on 3 samples -----
 pcr <- new.env()
 pcr$CPIAUCSL_model <- pcr(CPIAUCSL ~ ., data = application$train_data_ts, scale = TRUE, validation = "CV")
 pcr$IPS10_model <- pcr(IPS10 ~ ., data = application$train_data_ts, scale = TRUE, validation = "CV")
@@ -299,42 +295,32 @@ plsr$IPS10_model <- plsr(IPS10 ~ ., data = application$train_data_ts, scale = TR
 plsr$LHUR_model <- plsr(LHUR ~ ., data = application$train_data_ts, scale = TRUE, validation = "CV")
 plsr$FYFF_model <- plsr(FYFF ~ ., data = application$train_data_ts, scale = TRUE, validation = "CV")
 
-# end date: string_date_to_vector_date("2006-10-01")
-
-application$first_sample_period <- list(startdate =
-                                           string_date_to_vector_date("1972-01-01"),
-                                         enddate = application$data_end_date)
-application$second_sample_period <- list(startdate =
-                                           string_date_to_vector_date("1972-01-01"),
-                                         enddate = string_date_to_vector_date("1984-10-01"))
-
-application$third_sample_period <- list(startdate =
-                                           string_date_to_vector_date("1985-01-01"),
-                                         enddate = application$data_end_date)
+# Get samples of the data using window and specifying start and end date
 application$first_sample <-
   window(
     application$data_as_ts,
-    start = application$first_sample_period$startdate,
-    end = application$first_sample_period$enddate
+    start = string_date_to_vector_date("1972-01-01"),
+    end = string_date_to_vector_date("2006-10-01")
   )
 
 application$second_sample <-
   window(
     application$data_as_ts,
-    start = application$second_sample_period$startdate,
-    end = application$second_sample_period$enddate
+    start = string_date_to_vector_date("1972-01-01"),
+    end = string_date_to_vector_date("1984-10-01")
   )
 
 application$third_sample <-
   window(
     application$data_as_ts,
-    start = application$third_sample_period$startdate,
-    end = application$third_sample_period$enddate
+    start = string_date_to_vector_date("1985-01-01"),
+    end = string_date_to_vector_date("2006-10-01")
   )
 
 # sample_name: first_sample, second_sample, third_sample. Should be ready before invoking this function
 # sample: the actual sample, ts object
 predict_by_sample <- function(sample_name, sample, sample_start_date, sample_name_short){
+  # We use quarterly data
   runs <-
     (nrow(application[[sample_name]]) / 4)
   
@@ -392,10 +378,12 @@ predict_by_sample <- function(sample_name, sample, sample_start_date, sample_nam
   
   
   for (i in 1:runs) {
+    # Get data for the next year. Example: we start the sample from 1972 and get data for 1973. On the second draw we'll get data from 1972 to 1974 and so on.
     prediction_sample <-
       window(application[[sample_name]],
              end = sample_start_date[1] + i)
     
+    # Put the data into a model matrix ----
     CPIAUCSL_x <-
       model.matrix(CPIAUCSL ~ ., data = prediction_sample)[, -1]
     CPIAUCSL_y <-
@@ -417,6 +405,7 @@ predict_by_sample <- function(sample_name, sample, sample_start_date, sample_nam
       prediction_sample[, "LHUR"]
     
     for (j in application$PCR_ncomp) {
+      # Predict PCR using the current sample for each number of components. Then store the MSE under the number of component
       pcr$CPIAUCSL[[sample_name]]$predicted <-
         predict(pcr$CPIAUCSL_model, CPIAUCSL_x, ncomp = j)
       
@@ -448,6 +437,7 @@ predict_by_sample <- function(sample_name, sample, sample_start_date, sample_nam
     }
     
     for (g in application$PLSR_ncomp) {
+      # Predict PLSR using the current sample for each number of components. Then store the MSE under the number of component
       plsr$CPIAUCSL[[sample_name]]$predicted <-
         predict(plsr$CPIAUCSL_model,
                 CPIAUCSL_x,
@@ -480,7 +470,8 @@ predict_by_sample <- function(sample_name, sample, sample_start_date, sample_nam
     }
   }
   
-  for (h in application$variables_to_predict) {
+  # PCR Calculate the mean MSE for each variable
+  for (h in variables_names) {
     pcr[[h]][[sample_name]]$MSE_mean <- rep(0, length(application$PCR_ncomp))
     names(pcr[[h]][[sample_name]]$MSE_mean) <- application$PCR_ncomp
     
@@ -490,8 +481,8 @@ predict_by_sample <- function(sample_name, sample, sample_start_date, sample_nam
     }
   }
   
-  
-  for (k in application$variables_to_predict) {
+  # PLSR Calculate the mean MSE for each variable
+  for (k in variables_names) {
     plsr[[k]][[sample_name]]$MSE_mean <- rep(0, length(application$PLSR_ncomp))
     names(plsr[[k]][[sample_name]]$MSE_mean) <- application$PLSR_ncomp
     
@@ -501,9 +492,10 @@ predict_by_sample <- function(sample_name, sample, sample_start_date, sample_nam
     }
   }
   
+  # Calculate percentage change MSE between PCR and PLSR for each variable and each sample 
   application[[sample_name_short]]$percentage_change_PCR_PLSR <- list()
   
-  for (l in application$variables_to_predict) {
+  for (l in variables_names) {
     application[[sample_name_short]]$percentage_change_PCR_PLSR[[l]] <-
       mapply(
         get_percantage_change_MSE,
@@ -514,13 +506,13 @@ predict_by_sample <- function(sample_name, sample, sample_start_date, sample_nam
 }
 
 # Prediction based on first sample
-predict_by_sample(sample_name = "first_sample", sample = application$first_sample, sample_start_date = application$first_sample_period$startdate, sample_name_short = "FS")
+predict_by_sample(sample_name = "first_sample", sample = application$first_sample, sample_start_date = string_date_to_vector_date("1972-01-01"), sample_name_short = "FS")
 
 # Prediction based on second sample
 predict_by_sample(
   sample_name = "second_sample",
   sample = application$second_sample,
-  sample_start_date = application$second_sample_period$startdate,
+  sample_start_date = string_date_to_vector_date("1972-01-01"),
   sample_name_short = "SS"
 )
 
@@ -528,7 +520,7 @@ predict_by_sample(
 predict_by_sample(
   sample_name = "third_sample",
   sample = application$third_sample,
-  sample_start_date = application$third_sample_period$startdate,
+  sample_start_date = string_date_to_vector_date("1985-01-01"),
   sample_name_short = "TS"
 )
 ```  
@@ -551,7 +543,7 @@ Indeed, the variation in the unemployment rate in the training set is much bigge
 ```{r echo = FALSE, results='asis'}
 tables <- new.env()
 tables$column_names <- c("r = 1, 2", "r = 2, 4", "r = 3, 6")
-tables$row_names <- c("CPI inflation", "Industrial index", "Unemployment rate", "Federal funds rate")
+tables$row_names <- variables_display_names
 
 tables$FS <- matrix(nrow = 4, ncol = 3)
 colnames(tables$FS) <- tables$column_names
