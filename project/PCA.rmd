@@ -45,7 +45,8 @@ library("knitr") # rendering engine
 simulation_option_default <- list(N = possible_N[1],
                                   p = 20,
                                   runs = 100,
-                                  ncomp = NULL)
+                                  ncomp = NULL,
+                                  should_return_data = FALSE)
 dgp_option_default <- list(BETAS_INCREASE_FACTOR = 4, error_term_constant = 4)
 variables_display_names <- c("CPI inflation", "Industrial index", "Unemployment rate", "Federal funds rate")
 variables_names <- c("CPIAUCSL", "IPS10", "LHUR", "FYFF")
@@ -132,6 +133,7 @@ One of the issues with principal components extracted from large number of varia
 ```{r eval = TRUE, echo = FALSE, results='hide', message = FALSE, warning=FALSE}
 # Plotting data correlation ----
 plotting$sim_option <- simulation_option_default
+plotting$sim_option$should_return_data <- TRUE
 plotting$sim_option$runs <- 1
 plotting$sim_option$N <- 100
 plotting$sim_option$p <- 10
