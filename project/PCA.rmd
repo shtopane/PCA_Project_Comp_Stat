@@ -10,6 +10,8 @@ output:
 fontsize: 12pt
 geometry: "margin=1in"
 urlcolor: blue
+bibliography: "./references.bib"
+notice: "@*"
 ---
 
 ```{r setup, include=FALSE} 
@@ -114,7 +116,7 @@ In next simulations, $N$ is set to $200, 192$, $p$ to $100, 108$ and the number 
 When using smaller number of components again PLSR outperforms PCR in almost all cases. The only case where PCR performs better is in the case where all variables are correlated - this case is most likely to lead to overfitting compared to other cases, but even in this case when we increase the number of principal components used to six, the difference in MSE between PCR and PLSR drops to 0. PLSR performs better with less principal components used - PLSR gives way smaller MSE for one principal components used than PCR. This is not surprising given the workings of PLSR. For the most extreme cases - case where one variable is the most important for the target variable and where there is not leading variable explaining the target variable - PLSR again outperforms PCR. Mean MSE for cases 1 and 5 over simulations with different number of components used for PLSR are 40 and 73 respectively. For PCR the results are 107 mean MSE over simulations in case 1 and 73 mean MSE for case 5.  
 
 <!-- ![Simulation 8](images/simulation_1/simulation8.pdf){width=100%}  -->
-```{r eval = TRUE, echo = TRUE, message = FALSE, warning=FALSE}
+```{r eval = TRUE, echo = FALSE, message = FALSE, warning=FALSE}
 library("pls") # PCA and PLS regression
 library("corrplot") # create correlation plots
 library("readxl") # read Excel files
@@ -370,8 +372,18 @@ test$result <- simulation(dgp_option_list = dgp_option_default, simulation_optio
 
 
 # Empirical Applicaiton
-```{r, results='hide', echo=FALSE, eval = FALSE, message=FALSE}
 
+To test the performance of PCR and PLSR with realistic settings, I use J. Groen and G. Kapetanios (2008) and the data set from Stock and Watson (2009). 
+
+## Data set and variables
+The data set consists of 108 macroeconomic variables in a panel going from January 1959 to December 2006. The variables used for prediction are *CPI inflation*,  *industrial production*, *unemployment rate* and the *federal funds rate*. The raw data is transformed using transformation information for every variable in order to create stationary series of data. 
+The forecasts are performed over three samples from the data: from January 1972 to December 2006, from January 1972 to December 1984 and from January 1985 to December 2006. The models are trained on sample from January 1959 to December 1971. The forecasts are updated on a window of data for every year in the sample (h = 12). The predictions from the models are tested using different number of components. For PCR, the number of components are $r = 2, 4, 6$ and for PLSR $r = 1, 2, 3$. Finally, MSE is recorder for all sub-samples and number of components and the percentage change in MSE between PCR and PLSR is reported for every sample and variable.
+
+
+```{r, results='hide', echo=FALSE, eval = TRUE, message=FALSE}
+source("functions/constants.R")
+source("functions/data_utils.R")
+source("functions/helpers.R")
 # Load Data set
 load(file = "../data/data/WORKING_DATA.rda")
 application <- new.env()
@@ -394,10 +406,10 @@ application$data_end_date <- tail(zoo::as.Date(WORKING_DATA$rawdata), n = 1)
 application$data_first_date <- head(zoo::as.Date(WORKING_DATA$rawdata), n = 1)
 application$train_end_date <- string_date_to_vector_date("1971-10-01") #zoo::as.Date("1971-10-01")
 
-application$train_data_ts <- get_transformed_time_series(WORKING_DATA, enddate = train_end_date)
-application$data_as_ts <- get_transformed_time_series(WORKING_DATA, enddate = data_end_date)
+application$train_data_ts <- get_transformed_time_series(WORKING_DATA, enddate = application$train_end_date)
+application$data_as_ts <- get_transformed_time_series(WORKING_DATA, enddate = application$data_end_date)
 
-plot.ts(application$train_data_ts[, application$variables_to_predict])
+# plot.ts(application$train_data_ts[, application$variables_to_predict])
 
 
 set.seed(2456)
@@ -534,7 +546,7 @@ predict_by_sample <- function(sample_name, sample, sample_start_date, sample_nam
     LHUR_y <-
       prediction_sample[, "LHUR"]
     
-    for (j in PCR_ncomp) {
+    for (j in application$PCR_ncomp) {
       pcr$CPIAUCSL[[sample_name]]$predicted <-
         predict(pcr$CPIAUCSL_model, CPIAUCSL_x, ncomp = j)
       
@@ -563,9 +575,12 @@ predict_by_sample <- function(sample_name, sample, sample_start_date, sample_nam
         get_MSE(pcr$LHUR[[sample_name]]$predicted,
                 LHUR_y)
       
+      # plot(prediction_sample[, "LHUR"], main = "LHUR sub-sample")
+      # lines(pcr$LHUR[[sample_name]]$predicted)
+      
     }
     
-    for (g in PLSR_ncomp) {
+    for (g in application$PLSR_ncomp) {
       plsr$CPIAUCSL[[sample_name]]$predicted <-
         predict(plsr$CPIAUCSL_model,
                 CPIAUCSL_x,
@@ -598,22 +613,22 @@ predict_by_sample <- function(sample_name, sample, sample_start_date, sample_nam
     }
   }
   
-  for (h in variables_to_predict) {
-    pcr[[h]][[sample_name]]$MSE_mean <- rep(0, length(PCR_ncomp))
-    names(pcr[[h]][[sample_name]]$MSE_mean) <- PCR_ncomp
+  for (h in application$variables_to_predict) {
+    pcr[[h]][[sample_name]]$MSE_mean <- rep(0, length(application$PCR_ncomp))
+    names(pcr[[h]][[sample_name]]$MSE_mean) <- application$PCR_ncomp
     
-    for (hhh in PCR_ncomp) {
+    for (hhh in application$PCR_ncomp) {
       pcr[[h]][[sample_name]]$MSE_mean[as.character(hhh)] <-
         mean(pcr[[h]][[sample_name]]$MSE[, as.character(hhh)])
     }
   }
   
   
-  for (k in variables_to_predict) {
-    plsr[[k]][[sample_name]]$MSE_mean <- rep(0, length(PLSR_ncomp))
-    names(plsr[[k]][[sample_name]]$MSE_mean) <- PLSR_ncomp
+  for (k in application$variables_to_predict) {
+    plsr[[k]][[sample_name]]$MSE_mean <- rep(0, length(application$PLSR_ncomp))
+    names(plsr[[k]][[sample_name]]$MSE_mean) <- application$PLSR_ncomp
     
-    for (hh in PLSR_ncomp) {
+    for (hh in application$PLSR_ncomp) {
       plsr[[k]][[sample_name]]$MSE_mean[as.character(hh)] <-
         mean(plsr[[k]][[sample_name]]$MSE[, as.character(hh)])
     }
@@ -621,7 +636,7 @@ predict_by_sample <- function(sample_name, sample, sample_start_date, sample_nam
   
   application[[sample_name_short]]$percentage_change_PCR_PLSR <- list()
   
-  for (l in variables_to_predict) {
+  for (l in application$variables_to_predict) {
     application[[sample_name_short]]$percentage_change_PCR_PLSR[[l]] <-
       mapply(
         get_percantage_change_MSE,
@@ -650,4 +665,111 @@ predict_by_sample(
   sample_name_short = "TS"
 )
 
+# # PLOTTING ----
+# application$results$PCR$LHUR_first_sample <-
+#   ts(
+#     pcr$LHUR$first_sample$predicted,
+#     start = application$first_sample_period$startdate,
+#     frequency = 4
+#   )
+# 
+# application$results$PLSR$LHUR_first_sample <-
+#   ts(
+#     plsr$LHUR$first_sample$predicted,
+#     start = application$first_sample_period$startdate,
+#     frequency = 4
+#   )
+# 
+# application$results$LHUR_first_sample_time <-
+#   as.yearqtr(time(application$results$PCR$LHUR_first_sample))
+# 
+# {
+#   plot(
+#     x = application$results$LHUR_first_sample_time,
+#     y = application$results$PCR$LHUR_first_sample,
+#     type = "l",
+#     col = "goldenrod1",
+#     main = "First sample PCR results for unemployment rate",
+#     xlab = "Time",
+#     ylab = "LHUR",
+#   )
+#   lines(
+#     x = application$results$LHUR_first_sample_time,
+#     y = application$results$PLSR$LHUR_first_sample,
+#     col = "goldenrod4"
+#   )
+#   lines(
+#     x = application$results$LHUR_first_sample_time,
+#     y = application$first_sample[, "LHUR"],
+#     lwd=2.0,
+#     col = "dodgerblue3"
+#   )
+#   # Add a legend
+#   legend(
+#     "topleft",
+#     legend = c("PCR", "PLSR" , "Actual"),
+#     col = c("goldenrod1", "goldenrod4", "dodgerblue3"),
+#     lty = 1:1:1,
+#     cex = 0.8
+#   )
+# }
+
 ```
+## Application results
+I report the results using difference in MSE between PCR and PLSR in percent. Positive values indicate PLSR performed better than PCR and negative values report cases where PCR MSE was lower than PLSR MSE.  
+We can see the forecast performance of the methods in the three samples and for different number of components used. Cases are grouped by number of components used for each method - for PCR number of components are 2,4,6 and for PLSR number of components used are 1,2,3. Number of components used in the forecast in denoted by $r = n1, n2$ in the table output.
+
+In the first sample, PCR outperforms PLSR for all number of components only for the unemployment rate where we see big differences in MSE for both methods. CPI inflation is predicted better by PLSR for all components. This may be the case because of substantial differences between the training set and the first test sample. 
+
+```{r echo = FALSE}
+{par(mfrow=c(1,2))
+plot(application$train_data_ts[, "LHUR"], xlab="Time", ylab = "Unemployment rate", main = "LHUR in training data")
+plot(application$first_sample[, "LHUR"], xlab="Time", ylab = "Unemployment rate", main = "LHUR in first sample")}
+```
+
+Indeed, the variation in the unemployment rate in the training set is much bigger than in the first sample. The same is true for the second sample. The dynamics in the variable are matched for the third sample only where we see that PLSR outperforms PCR in the case where small number of components(one and two respectively) are used. PLSR produces smaller MSE for CPI inflation in the first and second samples, and PCR performs better in the third sample. For CPI inflation the reasons seem to be the same as for the unemployment rate - differences between the training set and the test sets. Industrial production index is predicted better by PLSR in the first and second samples by using either one or three components. PLSR has greater MSE for industrial production index in the first two samples when we use two principal components. In the third sample, PLSR outperforms PCR only when we include three principal components in the prediction. The federal funds rate is predicted better by PLSR when we use one principal component in all samples. PCR reports smaller MSE for the federal funds rate when six principal components are used and this is true for all samples.
+
+```{r echo = FALSE, results='asis'}
+library("knitr")
+
+tables <- new.env()
+tables$column_names <- c("r = 1, 2", "r = 2, 4", "r = 3, 6")
+tables$row_names <- c("CPI inflation", "Industrial index", "Unemployment rate", "Federal funds rate")
+
+tables$FS <- matrix(nrow = 4, ncol = 3)
+colnames(tables$FS) <- tables$column_names
+rownames(tables$FS) <- tables$row_names
+
+tables$FS[1, ] <- paste(round(application$FS$percentage_change_PCR_PLSR$CPIAUCSL, digits = 2), "%")
+tables$FS[2, ] <- paste(round(application$FS$percentage_change_PCR_PLSR$IPS10, digits = 2), "%")
+tables$FS[3, ] <- paste(round(application$FS$percentage_change_PCR_PLSR$LHUR, digits = 2), "%")
+tables$FS[4, ] <- paste(round(application$FS$percentage_change_PCR_PLSR$FYFF, digits = 2), "%")
+
+knitr::kable(tables$FS, format = "simple", caption = "First sample results", align = "lccrr")
+
+tables$SS <- matrix(nrow = 4, ncol = 3)
+colnames(tables$SS) <- tables$column_names
+rownames(tables$SS) <- tables$row_names
+
+tables$SS[1, ] <- paste(round(application$SS$percentage_change_PCR_PLSR$CPIAUCSL, digits = 2), "%")
+tables$SS[2, ] <- paste(round(application$SS$percentage_change_PCR_PLSR$IPS10, digits = 2), "%")
+tables$SS[3, ] <- paste(round(application$SS$percentage_change_PCR_PLSR$LHUR, digits = 2), "%")
+tables$SS[4, ] <- paste(round(application$SS$percentage_change_PCR_PLSR$FYFF, digits = 2), "%")
+
+knitr::kable(tables$SS, format = "simple", caption = "Second sample results", align = "lccrr")
+
+tables$TS <- matrix(nrow = 4, ncol = 3)
+colnames(tables$TS) <- tables$column_names
+rownames(tables$TS) <- tables$row_names
+
+tables$TS[1, ] <- paste(round(application$TS$percentage_change_PCR_PLSR$CPIAUCSL, digits = 2), "%")
+tables$TS[2, ] <- paste(round(application$TS$percentage_change_PCR_PLSR$IPS10, digits = 2), "%")
+tables$TS[3, ] <- paste(round(application$TS$percentage_change_PCR_PLSR$LHUR, digits = 2), "%")
+tables$TS[4, ] <- paste(round(application$TS$percentage_change_PCR_PLSR$FYFF, digits = 2), "%")
+
+knitr::kable(tables$TS, format = "simple", caption = "Third sample results", align = "lccrr")
+
+```
+
+# Conclusion
+For most applications the difference between PCR and PLSR is not substantial - both methods seem to perform the same. An important distinction between the workings of the methods arises from the underlying data structure on which they are performed. PCR is most beneficial in data setting without unique variation - all variables seem to move together. When we introduce correlation in clusters or neighborhoods of the data cloud, PLSR performs slightly better as it is able to capture the relationship between the features and the target variable. In a data set with one dominant factor explaining the target variable, PCR tends to aggregate all variables and diminish the importance of this one factor, while PLSR is able to capture the relationship and place greater predictive power on that one predictor variable - MSE for PLSR will drop substantially on the first principal component and all other components will not improve the prediction by much. Overall, the choice between PCR and PLSR lies in the structure of the data set at hand.
