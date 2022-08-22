@@ -154,6 +154,8 @@ simulation <-
     PLSR_ncomp_tracker <-
       matrix(ncol = correlated_variables_with_response_length, nrow = runs)
     
+    data_container <- list()
+    
     # Draw data
     # Simulate runs times with the 4 correlated variables proportions
     for (i in 1:runs) {
@@ -177,6 +179,9 @@ simulation <-
             X_COVARIANCE_CLUSTER_PROPORTION = correlated_variables_with_response[j]
           )
         # ----
+        
+        # Store data in order to return it
+        data_container[[j]] <- dgp_data
         
         # Seperate X's from Y's
         x <-
@@ -246,6 +251,7 @@ simulation <-
     
     return(
       list(
+        "data" = data_container,
         "MSE_PCR" = MSE_PCR,
         "MSE_PLSR" = MSE_PLSR,
         "PCR_ncomp" = PCR_ncomp_tracker,

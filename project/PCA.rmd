@@ -18,6 +18,28 @@ nocite: "@*"
 knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
 ```
 
+```{r eval = TRUE, echo = FALSE, message = FALSE, warning=FALSE}
+source("functions/data_utils.R")
+source("functions/model_utils.R")
+source("functions/plotting_utils.R")
+source("functions/constants.R")
+source("functions/helpers.R")
+source("functions/generate_data.R")
+source("functions/simulation.R")
+```
+
+```{r eval = TRUE, echo = FALSE, message = FALSE, warning=FALSE}
+library("pls") # PCA and PLS regression
+library("corrplot") # create correlation plots
+library("readxl") # read Excel files
+library("MASS")
+library("xts") #time series conversion
+library("zoo") # time series
+library("knitr") # rendering engine
+```
+
+\newpage
+
 # Introduction
 Economic phenomena, both micro and macro, has always been influenced by a large number of variables. Difficulties in data collection and lack of computational power in the past imposed usage of small structural models for forecasting. Nowadays we can employ several techniques and methods to forecast economic variables using high-dimensional data. Principal component analysis(PCA) is a wildly common method for dimension reduction. The basic idea is to transform the original data in such way as to use smaller number of factors in our prediction instead of the original number of variables. Partial Least Squares(PLS) constructs the factors such that the covariance between the factors and the target variable is maximized. My goal with this project is to explore the kinds of data structure where PCA performs poorly. In the literature one of the cases studied is high-dimensional data where one variable is highly important for the target variable and the other variables are not. The many noisy variables tend to  mask the signal in the leading variable when constructing the factors, leading to worse prediction.
 The project is organized into Theoretical background section and simulation and empirical application sections. For the lather sections I take guidance from [@groen2009revisiting] and use data set from [@stock2009forecasting].
@@ -89,20 +111,32 @@ One of the issues with principal components extracted from large number of varia
 4. Data set where all variables are highly correlated. 
 5. Data set with no high correlation between variables. 
 
+```{r eval = TRUE, echo = FALSE, results='hide', message = FALSE, warning=FALSE}
+# Plotting data correlation ----
+plotting <- new.env()
+plotting$simulation_option_default <- list(N = possible_N[1],
+                                  p = 20,
+                                  runs = 100)
+plotting$dgp_option_default <- list(BETAS_INCREASE_FACTOR = 4)
+plotting$sim_option <- plotting$simulation_option_default
+plotting$sim_option$runs <- 1
+plotting$sim_option$N <- 100
+plotting$sim_option$p <- 10
+plotting$result <- simulation(dgp_option_list = plotting$dgp_option_default, simulation_option_list = plotting$sim_option)
+
+# Show 3 plots on a row in 2 rows
+# mar argument makes the plot title visible(corrplot bug)
+{par(mfrow=c(2,3))
+corrplot::corrplot(cor(plotting$result$data[[1]]), title = "Case I", mar=c(0,0,2,0))
+corrplot::corrplot(cor(plotting$result$data[[2]]), title = "Case II", mar=c(0,0,2,0))
+corrplot::corrplot(cor(plotting$result$data[[3]]), title = "Case III", mar=c(0,0,2,0))
+corrplot::corrplot(cor(plotting$result$data[[4]]), title = "Case IV", mar=c(0,0,2,0))
+corrplot::corrplot(cor(plotting$result$data[[5]]), title = "Case V", mar=c(0,0,2,0))}
+```
+
 The coefficients $\beta$ are generated randomly and transformed according to the cases. In the first case, I inflate the first coefficient when creating the response variable. In the other cases I inflate the coefficients proportionally to the transformed variables, where in the fifth case the proportion is 0 and the coefficients are left without transformation.
 
 The simulations are performed using $N = 100, 200, 400, 192$ as number of observations, $p = 20, 100, 108$ as number of variables and are run 100 times, with exception of one simulation which was run for 1000 times. Models are evaluated on a training set, representing 1/2 of the sample, and predictions are made on a test set.
-
-<center>
-![Data and correlation structure Case 1](images/data_plots/Y_and_variance 1 .pdf){width=80%}
-</center>
-<!-- ![Data and correlation structure Case 2](images/data_plots/Y_and_variance 2 .pdf){width=50%} -->
-
-<!-- ![Data and correlation structure Case 3](images/data_plots/Y_and_variance 3 .pdf){width=50%} -->
-
-<!-- ![Data and correlation structure Case 4](images/data_plots/Y_and_variance 4 .pdf){width=50%}   -->
-
-<!-- ![Data and correlation structure Case 5](images/data_plots/Y_and_variance 5 .pdf){width=80%}   -->
 
 
 ## Simulation Results
@@ -117,21 +151,10 @@ In next simulations, $N$ is set to $200, 192$, $p$ to $100, 108$ and the number 
 When using smaller number of components again PLSR outperforms PCR in almost all cases. The only case where PCR performs better is in the case where all variables are correlated - this case is most likely to lead to overfitting compared to other cases, but even in this case when we increase the number of principal components used to six, the difference in MSE between PCR and PLSR drops to 0. PLSR performs better with less principal components used - PLSR gives way smaller MSE for one principal components used than PCR. This is not surprising given the workings of PLSR. For the most extreme cases - case where one variable is the most important for the target variable and where there is not leading variable explaining the target variable - PLSR again outperforms PCR. Mean MSE for cases 1 and 5 over simulations with different number of components used for PLSR are 40 and 73 respectively. For PCR the results are 107 mean MSE over simulations in case 1 and 73 mean MSE for case 5.  
 
 <!-- ![Simulation 8](images/simulation_1/simulation8.pdf){width=100%}  -->
-```{r eval = TRUE, echo = FALSE, message = FALSE, warning=FALSE}
-library("pls") # PCA and PLS regression
-library("corrplot") # create correlation plots
-library("readxl") # read Excel files
-library("MASS")
-library("xts") #time series conversion
-library("zoo") # time series
-```
+
 
 ```{r, eval = FALSE, echo = FALSE, message = FALSE, warning=FALSE}
-source("functions/constants.R")
-source("functions/data_utils.R")
-source("functions/helpers.R")
-source("functions/generate_data.R")
-source("functions/run_simulation.R")
+
 
 # Simulation 1: N = 100, p = 20, runs = 100, use optimal component number ----
 simulation_option_default <- list(N = possible_N[1],
@@ -356,18 +379,9 @@ simulation11$MSE_stats <- save_mean_mse_and_return_stats(simulation11$result)
 save(simulation11, file = "simulation_results_Rdata/simulation11.RData")
 
 pdf(file = "images/simulation_1/simulation11.pdf")
-par(mfrow = c(3, 2))
+par(mfrow = c(2, 3))
 plot_MSE_comparison_boxplot(simulation11$result , simulation11$MSE_stats)
 dev.off()
-
-
-# TEST ----
-test <- new.env()
-test$sim_option <- simulation_option_default
-test$sim_option$runs <- 1
-test$sim_option$N <- 20
-test$sim_option$p <- 15
-test$result <- simulation(dgp_option_list = dgp_option_default, simulation_option_list = test$sim_option)
 ```
  
 
@@ -382,9 +396,6 @@ The forecasts are performed over three samples from the data: from January 1972 
 
 
 ```{r, results='hide', echo=FALSE, eval = TRUE, message=FALSE}
-source("functions/constants.R")
-source("functions/data_utils.R")
-source("functions/helpers.R")
 # Load Data set
 load(file = "../data/data/WORKING_DATA.rda")
 application <- new.env()
@@ -576,9 +587,6 @@ predict_by_sample <- function(sample_name, sample, sample_start_date, sample_nam
         get_MSE(pcr$LHUR[[sample_name]]$predicted,
                 LHUR_y)
       
-      # plot(prediction_sample[, "LHUR"], main = "LHUR sub-sample")
-      # lines(pcr$LHUR[[sample_name]]$predicted)
-      
     }
     
     for (g in application$PLSR_ncomp) {
@@ -731,7 +739,7 @@ plot(application$first_sample[, "LHUR"], xlab="Time", ylab = "Unemployment rate"
 Indeed, the variation in the unemployment rate in the training set is much bigger than in the first sample. The same is true for the second sample. The dynamics in the variable are matched for the third sample only where we see that PLSR outperforms PCR in the case where small number of components(one and two respectively) are used. PLSR produces smaller MSE for CPI inflation in the first and second samples, and PCR performs better in the third sample. For CPI inflation the reasons seem to be the same as for the unemployment rate - differences between the training set and the test sets. Industrial production index is predicted better by PLSR in the first and second samples by using either one or three components. PLSR has greater MSE for industrial production index in the first two samples when we use two principal components. In the third sample, PLSR outperforms PCR only when we include three principal components in the prediction. The federal funds rate is predicted better by PLSR when we use one principal component in all samples. PCR reports smaller MSE for the federal funds rate when six principal components are used and this is true for all samples.
 
 ```{r echo = FALSE, results='asis'}
-library("knitr")
+
 
 tables <- new.env()
 tables$column_names <- c("r = 1, 2", "r = 2, 4", "r = 3, 6")
@@ -774,5 +782,7 @@ knitr::kable(tables$TS, format = "simple", caption = "Third sample results", ali
 
 # Conclusion
 For most applications the difference between PCR and PLSR is not substantial - both methods seem to perform the same. An important distinction between the workings of the methods arises from the underlying data structure on which they are performed. PCR is most beneficial in data setting without unique variation - all variables seem to move together. When we introduce correlation in clusters or neighborhoods of the data cloud, PLSR performs slightly better as it is able to capture the relationship between the features and the target variable. In a data set with one dominant factor explaining the target variable, PCR tends to aggregate all variables and diminish the importance of this one factor, while PLSR is able to capture the relationship and place greater predictive power on that one predictor variable - MSE for PLSR will drop substantially on the first principal component and all other components will not improve the prediction by much. Overall, the choice between PCR and PLSR lies in the structure of the data set at hand.  
+
+\newpage
 
 # References
