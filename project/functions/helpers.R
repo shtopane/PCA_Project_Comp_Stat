@@ -1,4 +1,4 @@
-source("project/functions/constants.R")
+source("functions/constants.R")
 
 get_percentage_of_number <- function(percentage, number){
   return(round(percentage / number, digits = 2))
