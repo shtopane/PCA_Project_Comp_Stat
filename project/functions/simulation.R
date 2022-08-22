@@ -1,5 +1,3 @@
-library("propagate") # lib for creating big correlation or covariance matrices
-
 # @var simulation_option_list
 # variables related to the simulation itself: parameters that vary between runs like N, p, runs, ets
 # @var dgp_option_list

@@ -19,6 +19,17 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 ```
 
 ```{r eval = TRUE, echo = FALSE, message = FALSE, warning=FALSE}
+library("pls") # PCA and PLS regression
+library("corrplot") # create correlation plots
+library("propagate") # lib for creating big correlation or covariance matrices
+library("readxl") # read Excel files
+library("MASS")
+library("xts") #time series conversion
+library("zoo") # time series
+library("knitr") # rendering engine
+```
+
+```{r eval = TRUE, echo = FALSE, message = FALSE, warning=FALSE}
 source("functions/data_utils.R")
 source("functions/model_utils.R")
 source("functions/plotting_utils.R")
@@ -27,16 +38,6 @@ source("functions/helpers.R")
 source("functions/generate_data.R")
 source("functions/simulation.R")
 source("functions/run_simulations.R")
-```
-
-```{r eval = TRUE, echo = FALSE, message = FALSE, warning=FALSE}
-library("pls") # PCA and PLS regression
-library("corrplot") # create correlation plots
-library("readxl") # read Excel files
-library("MASS")
-library("xts") #time series conversion
-library("zoo") # time series
-library("knitr") # rendering engine
 ```
 
 
