@@ -14,19 +14,19 @@ bibliography: "./references.bib"
 nocite: "@*"
 ---
 
-```{r setup, include=FALSE} 
-knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
-```
-
 ```{r eval = TRUE, echo = FALSE, message = FALSE, warning=FALSE}
+library("knitr") # rendering engine
+library("MASS")
 library("pls") # PCA and PLS regression
 library("corrplot") # create correlation plots
 library("propagate") # lib for creating big correlation or covariance matrices
 library("readxl") # read Excel files
-library("MASS")
 library("xts") #time series conversion
 library("zoo") # time series
-library("knitr") # rendering engine
+```
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
 ```
 
 ```{r eval = TRUE, echo = FALSE, message = FALSE, warning=FALSE}

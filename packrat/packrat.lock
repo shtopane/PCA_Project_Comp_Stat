@@ -579,8 +579,8 @@ Requires: digest, htmltools, htmlwidgets, jsonlite, reactR
 
 Package: readxl
 Source: CRAN
-Version: 1.4.0
-Hash: fcda9d4eda474162513fdd464c8833e9
+Version: 1.4.1
+Hash: b5c1867ebab7cc184825dde18f8e49d7
 Requires: cellranger, cpp11, progress, tibble
 
 Package: rematch
