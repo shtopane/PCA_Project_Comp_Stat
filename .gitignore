@@ -4,3 +4,4 @@ data/gss/*
 project/_cache
 data/Replication.txt
 .Rproj.user
+.Rhistory
